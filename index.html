@@ -6,487 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/gh/un-zynq/zynq-lib@1.1.2/index.min.js"></script>
     <style>
-        :root {
-            --accent: #6366f1;
-            --bg: #060607;
-            --sidebar-bg: #141417;
-            --chat-bg: #1c1d21;
-            --input-bg: #25272d;
-            --text-main: #f1f2f8;
-            --text-muted: #8f94a3;
-            --success: #10b981;
-            --danger: #f43f5e;
-        }
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            grid-template-rows: 1fr;
-        }
-        /* SIDEBAR */
-        #sidebar {
-            background: var(--sidebar-bg);
-            display: grid;
-            grid-template-rows: auto auto 1fr;
-            border-right: 1px solid #0a0a0b;
-            box-shadow: 4px 0 12px -4px rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .sidebar-header {
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            background: rgba(0,0,0,0.2);
-        }
-        .logo {
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            background: linear-gradient(90deg, var(--accent), #a5b4fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .add-btn {
-            background: transparent;
-            border: none;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--text-main);
-            padding: 0;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .add-btn:hover {
-            transform: scale(1.12);
-        }
-        .my-profile {
-            padding: 20px;
-            background: rgba(0,0,0,0.25);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        #myId {
-            background: #0a0a0b;
-            padding: 14px 16px;
-            border-radius: 12px;
-            font-family: 'SF Mono', monospace;
-            color: var(--accent);
-            font-size: 13.5px;
-            cursor: pointer;
-            text-align: center;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: inset 0 2px 0 rgba(255,255,255,0.05);
-        }
-        #myId:hover {
-            background: #111113;
-            border-color: var(--accent);
-            transform: translateY(-1px);
-        }
-        #friendsList {
-            padding: 12px 8px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #6366f1 #25272d;
-        }
-        .friend-row {
-            padding: 14px 16px;
-            display: grid;
-            grid-template-columns: 48px 1fr auto;
-            align-items: center;
-            gap: 14px;
-            cursor: pointer;
-            border-radius: 14px;
-            margin-bottom: 6px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-        .friend-row:hover {
-            background: rgba(255,255,255,0.08);
-            transform: translateX(4px);
-        }
-        .friend-row.active {
-            background: rgba(99, 102, 241, 0.15);
-            color: white;
-        }
-        .avatar-container {
-            position: relative;
-            width: 48px;
-            height: 48px;
-        }
-        .avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--accent), #a5b4fc);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 20px;
-            color: white;
-            box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.4);
-        }
-        .status-dot {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--sidebar-bg);
-            border: 3px solid var(--sidebar-bg);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
-        }
-        .status-dot.online {
-            background: var(--success);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3); }
-            50% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-        }
-        .friend-info {
-            min-width: 0;
-            overflow: hidden;
-        }
-        .friend-name-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-        }
-        .friend-name {
-            font-weight: 600;
-            font-size: 15.5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-width: 0;
-            flex: 1;
-        }
-        .unread-pill {
-            background: var(--danger);
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 2px 9px;
-            border-radius: 9999px;
-            white-space: nowrap;
-            flex-shrink: 0;
-            min-width: 18px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        .friend-id {
-            font-size: 12px;
-            font-family: 'SF Mono', monospace;
-            opacity: 0.65;
-            margin-top: 2px;
-        }
-        .edit-btn {
-            opacity: 0;
-            background: none;
-            border: 1px solid rgba(255,255,255,0.15);
-            color: var(--text-muted);
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-        .friend-row:hover .edit-btn {
-            opacity: 1;
-        }
-        /* MAIN AREA */
-        #main {
-            display: grid;
-            grid-template-rows: 64px 1fr auto;
-            background: var(--chat-bg);
-            position: relative;
-            height: 100%;
-        }
-        .header {
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.3);
-            background: var(--chat-bg);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 10;
-        }
-        .burger-btn {
-            background: none;
-            border: none;
-            width: 44px;
-            height: 44px;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            gap: 5px;
-            padding: 0;
-        }
-        .burger-btn span {
-            width: 24px;
-            height: 2.5px;
-            background: var(--text-main);
-            border-radius: 9999px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .burger-btn.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 6px); }
-        .burger-btn.open span:nth-child(2) { opacity: 0; transform: scale(0); }
-        .burger-btn.open span:nth-child(3) { transform: rotate(-45deg) translate(7px, -6px); }
-        #chatHeaderContent {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex: 1;
-        }
-        #chatTitle {
-            font-size: 19px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-        #onlineIndicator {
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        /* CHAT AREA */
-        #chat {
-            padding: 28px 24px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            background: var(--chat-bg);
-        }
-        /* PERFECT MESSAGE ALIGNMENTS + TIMESTAMPS */
-        .message-row {
-            display: flex;
-            gap: 12px;
-            max-width: 72%;
-            margin-bottom: 4px;
-        }
-        .message-row.other {
-            align-self: flex-start;
-        }
-        .message-row.me {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-        .avatar-chat {
-            width: 34px;
-            height: 34px;
-            background: linear-gradient(135deg, var(--accent), #a5b4fc);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 15px;
-            color: white;
-            flex-shrink: 0;
-            margin-top: 2px;
-            box-shadow: 0 2px 8px -2px rgba(99, 102, 241, 0.4);
-        }
-        .message-content {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            max-width: calc(100% - 46px);
-        }
-        .message-row.me .message-content {
-            align-items: flex-end;
-        }
-        .bubble {
-            padding: 14px 20px;
-            border-radius: 22px;
-            font-size: 15.5px;
-            line-height: 1.45;
-            word-wrap: break-word;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .bubble.me {
-            background: var(--accent);
-            color: white;
-            border-bottom-right-radius: 6px;
-        }
-        .bubble.other {
-            background: var(--input-bg);
-            border-bottom-left-radius: 6px;
-        }
-        .timestamp {
-            font-size: 11px;
-            color: var(--text-muted);
-            padding: 0 6px;
-            opacity: 0.85;
-            font-weight: 500;
-        }
-        /* TYPING INDICATOR */
-        .typing-dots {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .typing-dot {
-            width: 6px;
-            height: 6px;
-            background: #8f94a3;
-            border-radius: 50%;
-            animation: typingBounce 1.25s infinite ease-in-out;
-        }
-        .typing-dot:nth-child(2) { animation-delay: 120ms; }
-        .typing-dot:nth-child(3) { animation-delay: 240ms; }
-        @keyframes typingBounce {
-            0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-4px); }
-        }
-        .bubble.typing-bubble {
-            padding: 11px 20px;
-            display: flex;
-            align-items: center;
-        }
-        /* INPUT BAR */
-        .input-bar {
-            padding: 20px 24px;
-            background: var(--chat-bg);
-            border-top: 1px solid rgba(0,0,0,0.3);
-            display: none;
-            gap: 12px;
-            align-items: center;
-        }
-        input {
-            flex: 1;
-            background: var(--input-bg);
-            border: none;
-            padding: 16px 22px;
-            border-radius: 9999px;
-            color: white;
-            font-size: 15.5px;
-            outline: none;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);
-        }
-        input::placeholder {
-            color: var(--text-muted);
-        }
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0 32px;
-            height: 52px;
-            border-radius: 9999px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 14px;
-            letter-spacing: 0.5px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px -4px var(--accent);
-        }
-        button:hover {
-            background: #4f46e5;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px -4px var(--accent);
-        }
-        button:disabled {
-            background: #3b3d44;
-            cursor: not-allowed;
-        }
-        /* OVERLAYS */
-        #overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(6, 6, 7, 0.75);
-            z-index: 900;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-            display: none;
-        }
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(6, 6, 7, 0.92);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(12px);
-        }
-        .modal-content {
-            background: var(--sidebar-bg);
-            padding: 32px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.6);
-            margin: 20px;
-            text-align: center;
-        }
-        /* INACTIVE OVERLAY */
-        #inactiveOverlay .modal-content {
-            max-width: 460px;
-        }
-        #inactiveOverlay h2 {
-            color: var(--danger);
-            font-size: 26px;
-            margin-bottom: 16px;
-        }
-        #inactiveOverlay p {
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 32px;
-            font-size: 15.5px;
-        }
-        #inactiveOverlay button {
-            width: 100%;
-            height: 56px;
-            font-size: 16px;
-            font-weight: 700;
-        }
-        /* MOBILE */
-        @media (max-width: 768px) {
-            body { grid-template-columns: 1fr; }
-            #sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                width: 300px;
-                transform: translateX(-100%);
-                box-shadow: 12px 0 30px -10px rgba(0, 0, 0, 0.7);
-            }
-            #sidebar.open { transform: translateX(0); }
-            .burger-btn { display: flex; }
-            .header { padding: 0 16px; }
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #6366f1;
-            border-radius: 9999px;
-        }
+:root{--accent:#6366f1;--bg:#060607;--sidebar-bg:#141417;--chat-bg:#1c1d21;--input-bg:#25272d;--text-main:#f1f2f8;--text-muted:#8f94a3;--success:#10b981;--danger:#f43f5e}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text-main);height:100vh;overflow:hidden;display:grid;grid-template-columns:300px 1fr;grid-template-rows:1fr}#sidebar{background:var(--sidebar-bg);display:grid;grid-template-rows:auto auto 1fr;border-right:1px solid #0a0a0b;box-shadow:4px 0 12px -4px rgba(0,0,0,.6);z-index:1000;transition:.4s cubic-bezier(.32,.72,0,1)}.sidebar-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.2)}.logo{font-size:22px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,var(--accent),#a5b4fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.add-btn{background:0 0;border:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-main);padding:0;transition:.2s cubic-bezier(.4,0,.2,1)}.add-btn:hover{transform:scale(1.12)}.my-profile{padding:20px;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.06)}#myId{background:#0a0a0b;padding:14px 16px;border-radius:12px;font-family:'SF Mono',monospace;color:var(--accent);font-size:13.5px;cursor:pointer;text-align:center;border:1px solid rgba(99,102,241,.3);transition:.2s cubic-bezier(.4,0,.2,1);box-shadow:inset 0 2px 0 rgba(255,255,255,.05)}#myId:hover{background:#111113;border-color:var(--accent);transform:translateY(-1px)}#friendsList{padding:12px 8px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#6366f1 #25272d}.friend-row{padding:14px 16px;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:14px;cursor:pointer;border-radius:14px;margin-bottom:6px;transition:.2s cubic-bezier(.4,0,.2,1);position:relative}.friend-row:hover{background:rgba(255,255,255,.08);transform:translateX(4px)}.friend-row.active{background:rgba(99,102,241,.15);color:#fff}.avatar-container{position:relative;width:48px;height:48px}.avatar{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),#a5b4fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#fff;box-shadow:0 4px 12px -2px rgba(99,102,241,.4)}.status-dot{position:absolute;bottom:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--sidebar-bg);border:3px solid var(--sidebar-bg);box-shadow:0 0 0 3px rgba(16,185,129,.3)}.status-dot.online{background:var(--success);animation:pulse 2s infinite}@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(16,185,129,.3)}50%{box-shadow:0 0 0 7px rgba(16,185,129,0)}}.friend-info{min-width:0;overflow:hidden}.friend-name-container{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}.friend-name{font-weight:600;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}.unread-pill{background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:9999px;white-space:nowrap;flex-shrink:0;min-width:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}.friend-id{font-size:12px;font-family:'SF Mono',monospace;opacity:.65;margin-top:2px}.edit-btn{opacity:0;background:0 0;border:1px solid rgba(255,255,255,.15);color:var(--text-muted);padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;transition:.2s ease;flex-shrink:0}.friend-row:hover .edit-btn{opacity:1}#main{display:grid;grid-template-rows:64px 1fr auto;background:var(--chat-bg);position:relative;height:100%;min-height:0}.header{padding:0 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(0,0,0,.3);background:var(--chat-bg);box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:10}.burger-btn{background:0 0;border:none;width:44px;height:44px;display:none;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;gap:5px;padding:0}.burger-btn span{width:24px;height:2.5px;background:var(--text-main);border-radius:9999px;transition:.3s cubic-bezier(.4,0,.2,1)}.burger-btn.open span:nth-child(1){transform:rotate(45deg) translate(5px,6px)}.burger-btn.open span:nth-child(2){opacity:0;transform:scale(0)}.burger-btn.open span:nth-child(3){transform:rotate(-45deg) translate(7px,-6px)}#chatHeaderContent{display:flex;align-items:center;gap:14px;flex:1}#chatTitle{font-size:19px;font-weight:700;letter-spacing:-.5px}#onlineIndicator{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px}#chat{padding:28px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;background:var(--chat-bg);scroll-behavior:smooth;flex:1;min-height:0}.message-row{display:flex;gap:12px;max-width:72%;margin-bottom:4px}.message-row.other{align-self:flex-start}.message-row.me{align-self:flex-end;flex-direction:row-reverse}.avatar-chat{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#a5b4fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;margin-top:2px;box-shadow:0 2px 8px -2px rgba(99,102,241,.4)}.message-content{display:flex;flex-direction:column;gap:3px;max-width:calc(100% - 46px)}.message-row.me .message-content{align-items:flex-end}.bubble{padding:14px 20px;border-radius:22px;font-size:15.5px;line-height:1.45;word-wrap:break-word;box-shadow:0 2px 6px rgba(0,0,0,.15)}.bubble.me{background:var(--accent);color:#fff;border-bottom-right-radius:6px}.bubble.other{background:var(--input-bg);border-bottom-left-radius:6px}.timestamp{font-size:11px;color:var(--text-muted);padding:0 6px;opacity:.85;font-weight:500}.typing-dots{display:flex;align-items:center;gap:4px}.typing-dot{width:6px;height:6px;background:#8f94a3;border-radius:50%;animation:typingBounce 1.25s infinite ease-in-out}.typing-dot:nth-child(2){animation-delay:.12s}.typing-dot:nth-child(3){animation-delay:.24s}@keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}.bubble.typing-bubble{padding:11px 20px;display:flex;align-items:center}.input-bar{padding:20px 24px;background:var(--chat-bg);border-top:1px solid rgba(0,0,0,.3);display:none;gap:12px;align-items:center}input{flex:1;background:var(--input-bg);border:none;padding:16px 22px;border-radius:9999px;color:#fff;font-size:15.5px;outline:none;box-shadow:inset 0 2px 6px rgba(0,0,0,.2)}input::placeholder{color:var(--text-muted)}button{background:var(--accent);color:#fff;border:none;padding:0 32px;height:52px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:14px;letter-spacing:.5px;transition:.2s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 12px -4px var(--accent)}button:hover{background:#4f46e5;transform:translateY(-1px);box-shadow:0 6px 16px -4px var(--accent)}button:disabled{background:#3b3d44;cursor:not-allowed}#overlay{position:fixed;inset:0;background:rgba(6,6,7,.75);z-index:900;opacity:0;pointer-events:none;transition:opacity .4s cubic-bezier(.32,.72,0,1);display:none}.modal{position:fixed;inset:0;background:rgba(6,6,7,.92);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(12px)}.modal-content{background:var(--sidebar-bg);padding:32px;border-radius:20px;width:100%;max-width:420px;box-shadow:0 25px 50px -12px rgb(0 0 0 /.6);margin:20px;text-align:center}@media(max-width:768px){body{grid-template-columns:1fr}#sidebar{position:fixed;left:0;top:0;bottom:0;width:300px;transform:translateX(-100%);box-shadow:12px 0 30px -10px rgba(0,0,0,.7)}#sidebar.open{transform:translateX(0)}.burger-btn{display:flex}.header{padding:0 16px}}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:#6366f1;border-radius:9999px}
     </style>
 </head>
 <body>
@@ -522,6 +42,7 @@
             </div>
         </div>
         <div id="chat">
+            <!-- Welcome message shown only before selecting a chat -->
             <div style="margin: auto; color: var(--text-muted); text-align: center; max-width: 320px;">
                 <h2 style="font-size: 28px; margin-bottom: 8px; background: linear-gradient(90deg, var(--accent), #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ZYNQ Direct Connect</h2>
                 <p style="font-size: 15.5px; line-height: 1.5;">Secure peer-to-peer communication.<br>No servers. No logs. Just you and your contacts.</p>
@@ -537,14 +58,6 @@
     <div id="overlay" onclick="toggleMenu()"></div>
 
     <!-- MODALS -->
-    <div id="setupModal" class="modal">
-        <div class="modal-content">
-            <h2 style="margin-top:0">Welcome to ZYNQ Pro</h2>
-            <p style="color: var(--text-muted); margin-bottom: 24px;">Choose a name for this device.</p>
-            <input id="userName" placeholder="Your name..." style="width:100%; padding: 16px 20px; border-radius: 14px; border: 1px solid #25272d; background: #25272d; color: white; font-size: 16px; margin-bottom: 24px;">
-            <button onclick="saveSetup()" style="width:100%; height: 56px; background: var(--accent); border-radius: 14px; font-size: 16px; font-weight: 700;">START INTERFACE</button>
-        </div>
-    </div>
     <div id="friendModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle" style="margin-top:0">Add Friend</h2>
@@ -568,15 +81,15 @@
     <!-- INACTIVE OVERLAY -->
     <div id="inactiveOverlay" class="modal">
         <div class="modal-content">
-            <h2>🚫 Tab in slaapstand</h2>
-            <p>Deze tab is nu volledig inactief.<br>De peer instance is 100% vernietigd zodat alleen de andere tab actief blijft.</p>
-            <p style="font-size: 13px; opacity: 0.7; margin-top: -8px;">Geen connecties, geen berichten, niks meer actief.</p>
-          
+            <h2>🚫 Tab Inactive</h2>
+            <p>This tab is now fully inactive.<br>The peer instance has been 100% destroyed so only the other tab remains active.</p>
+            <p style="font-size: 13px; opacity: 0.7; margin-top: -8px;">No connections, no messages, nothing active.</p>
+        
             <button onclick="window.location.reload()" style="margin-top: 12px;">
-                HERLAAD PAGINA<br><span style="font-size:13px; opacity:0.8;">om deze tab opnieuw actief te maken</span>
+                RELOAD PAGE<br><span style="font-size:13px; opacity:0.8;">to reactivate this tab</span>
             </button>
             <div style="margin-top: 28px; font-size: 12px; color: var(--text-muted);">
-                Meerdere tabs open?<br>Alleen de nieuwste tab blijft werken.
+                Multiple tabs open?<br>Only the newest tab will continue working.
             </div>
         </div>
     </div>
@@ -591,9 +104,14 @@
         let inputTypingTimeout = null;
 
         let db = JSON.parse(localStorage.getItem('zynq_pro_v1')) || {
-            user: { name: '', id: '' },
+            user: { id: '' },
             friends: {}
         };
+
+        // Optimized chat rendering variables (prevents animation reset on every keystroke)
+        let chatMessagesDiv = null;
+        let currentRenderedChat = null;
+        let chatInitialized = false;
 
         // ====================== MULTI-TAB LOGIC ======================
         function setAsActiveTab() {
@@ -613,11 +131,11 @@
             return true;
         }
 
-        // ====================== VOLLEDIGE PEER VERNIELING + OVERLAY ======================
+        // ====================== FULL PEER DESTRUCTION + OVERLAY ======================
         function sleepPeer() {
-            console.log('%c[ ZYNQ ] Deze tab gaat in slaapstand – een nieuwere tab is actief', 'color:#6366f1; font-weight:700');
+            console.log('%c[ ZYNQ ] This tab is going inactive – a newer tab is active', 'color:#6366f1; font-weight:700');
             if (peer) {
-                console.log('%c[ ZYNQ ] Peer instance wordt volledig vernietigd...', 'color:#f43f5e; font-weight:700');
+                console.log('%c[ ZYNQ ] Peer instance is being completely destroyed...', 'color:#f43f5e; font-weight:700');
                 try {
                     if (typeof peer.destroy === 'function') peer.destroy();
                     else if (typeof peer.close === 'function') peer.close();
@@ -627,14 +145,13 @@
             }
             onlineStatus = {};
             currentChat = null;
-            console.log('%c[ ZYNQ ] ✅ Peer is 100% KAPOT – niks overgebleven', 'color:#10b981; font-weight:700');
+            console.log('%c[ ZYNQ ] ✅ Peer is 100% DESTROYED – nothing left', 'color:#10b981; font-weight:700');
             showInactiveOverlay();
         }
         function showInactiveOverlay() {
             const overlay = document.getElementById('inactiveOverlay');
             if (overlay) overlay.style.display = 'flex';
         }
-
         window.addEventListener('storage', (e) => {
             if (e.key === ACTIVE_KEY) checkIfStillActive();
         });
@@ -643,7 +160,7 @@
         function formatTime(timestamp) {
             if (!timestamp) return '';
             const date = new Date(timestamp);
-            return date.getHours().toString().padStart(2, '0') + ':' + 
+            return date.getHours().toString().padStart(2, '0') + ':' +
                    date.getMinutes().toString().padStart(2, '0');
         }
 
@@ -684,22 +201,8 @@
         window.onload = () => {
             setAsActiveTab();
             checkIfStillActive();
-            if (!db.user.name) {
-                document.getElementById('setupModal').style.display = 'flex';
-            } else {
-                init();
-            }
-        };
-
-        function saveSetup() {
-            const n = document.getElementById('userName').value.trim();
-            if (!n) return;
-            db.user.name = n;
-            db.user.id = 'ZNQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-            save();
-            document.getElementById('setupModal').style.display = 'none';
             init();
-        }
+        };
 
         function generateRandomName() {
             return "User" + Math.floor(1000 + Math.random() * 8999);
@@ -707,7 +210,16 @@
 
         function init() {
             if (!isActiveTab) return;
+
+            // Auto-generate ID on first load (no more useless name setup)
+            if (!db.user.id) {
+                db.user.id = 'ZNQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                save();
+            }
+            document.getElementById('myId').textContent = db.user.id;
+
             peer = new ZYNQ.Peer({ id: db.user.id });
+
             peer.on('ready', (id) => {
                 document.getElementById('myId').textContent = id;
                 let retries = 0;
@@ -723,7 +235,6 @@
                 checkAllStatuses();
             });
 
-            // UPDATED MESSAGE HANDLER: supports messages + typing indicators
             peer.on('message', (payload) => {
                 const data = payload.data;
                 const from = payload.from;
@@ -741,10 +252,7 @@
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
 
-            // Setup typing listener (perfect real-time typing indicators)
             setupTypingListener();
-
-            // Render friends immediately from localStorage
             render();
         }
 
@@ -822,16 +330,12 @@
             const inp = document.getElementById('msgInp');
             const text = inp.value.trim();
             if (!text || !currentChat || !onlineStatus[currentChat]) return;
-
             const msgTime = Date.now();
             peer.send(currentChat, { type: 'msg', text: text });
-
             db.friends[currentChat].msgs.push({ f: 'me', t: text, time: msgTime });
             save();
             renderMessages();
             inp.value = '';
-
-            // Stop typing indicator immediately after sending
             if (inputTypingTimeout) {
                 clearTimeout(inputTypingTimeout);
                 peer.send(currentChat, { type: 'typing', status: false });
@@ -890,52 +394,65 @@
                 fList.appendChild(div);
             });
             if (Object.keys(db.friends).length === 0) {
-                fList.innerHTML = `<div style="padding: 40px 20px; text-align:center; color:var(--text-muted); font-size:14px;">Nog geen vrienden toegevoegd.<br>Klik op + om iemand toe te voegen.</div>`;
+                fList.innerHTML = `<div style="padding: 40px 20px; text-align:center; color:var(--text-muted); font-size:14px;">No friends added yet.<br>Click the + to add someone.</div>`;
             }
         }
 
-        // ====================== PERFECT CHAT RENDERING (timestamps + alignments + typing) ======================
+        // ====================== OPTIMIZED CHAT RENDERING (no full reset on typing) ======================
         function renderMessages() {
             const c = document.getElementById('chat');
-            c.innerHTML = '';
             if (!currentChat || !db.friends[currentChat]) return;
 
             const friend = db.friends[currentChat];
             const firstLetter = friend.alias.charAt(0).toUpperCase();
-
-            db.friends[currentChat].msgs.forEach(m => {
-                const isMe = m.f === 'me';
-                const row = document.createElement('div');
-                row.className = `message-row ${isMe ? 'me' : 'other'}`;
-
-                if (!isMe) {
-                    const av = document.createElement('div');
-                    av.className = 'avatar-chat';
-                    av.textContent = firstLetter;
-                    row.appendChild(av);
-                }
-
-                const content = document.createElement('div');
-                content.className = 'message-content';
-
-                const bubble = document.createElement('div');
-                bubble.className = `bubble ${isMe ? 'me' : 'other'}`;
-                bubble.textContent = m.t;
-                content.appendChild(bubble);
-
-                const ts = document.createElement('div');
-                ts.className = 'timestamp';
-                ts.textContent = formatTime(m.time);
-                content.appendChild(ts);
-
-                row.appendChild(content);
-                c.appendChild(row);
-            });
-
-            // TYPING INDICATOR (real-time, perfect alignment)
+            const currentMsgCount = friend.msgs.length;
             const isTypingNow = !!typingIndicators[currentChat];
-            if (isTypingNow) {
+
+            // First-time initialization of the scrollable messages container
+            if (!chatInitialized) {
+                c.innerHTML = '';
+                chatMessagesDiv = document.createElement('div');
+                chatMessagesDiv.style.display = 'flex';
+                chatMessagesDiv.style.flexDirection = 'column';
+                chatMessagesDiv.style.gap = '18px';
+                c.appendChild(chatMessagesDiv);
+                chatInitialized = true;
+            }
+
+            // Rebuild only when messages changed or chat switched (prevents unnecessary DOM thrashing)
+            if (currentRenderedChat !== currentChat || chatMessagesDiv.children.length !== currentMsgCount) {
+                chatMessagesDiv.innerHTML = '';
+                friend.msgs.forEach(m => {
+                    const isMe = m.f === 'me';
+                    const row = document.createElement('div');
+                    row.className = `message-row ${isMe ? 'me' : 'other'}`;
+                    if (!isMe) {
+                        const av = document.createElement('div');
+                        av.className = 'avatar-chat';
+                        av.textContent = firstLetter;
+                        row.appendChild(av);
+                    }
+                    const content = document.createElement('div');
+                    content.className = 'message-content';
+                    const bubble = document.createElement('div');
+                    bubble.className = `bubble ${isMe ? 'me' : 'other'}`;
+                    bubble.textContent = m.t;
+                    content.appendChild(bubble);
+                    const ts = document.createElement('div');
+                    ts.className = 'timestamp';
+                    ts.textContent = formatTime(m.time);
+                    content.appendChild(ts);
+                    row.appendChild(content);
+                    chatMessagesDiv.appendChild(row);
+                });
+                currentRenderedChat = currentChat;
+            }
+
+            // Typing indicator – only add/remove when state actually changes (animation never resets on every keystroke)
+            let existingTyping = c.querySelector('#typing-indicator');
+            if (isTypingNow && !existingTyping) {
                 const row = document.createElement('div');
+                row.id = 'typing-indicator';
                 row.className = 'message-row other';
                 row.innerHTML = `
                     <div class="avatar-chat">${firstLetter}</div>
@@ -950,6 +467,8 @@
                     </div>
                 `;
                 c.appendChild(row);
+            } else if (!isTypingNow && existingTyping) {
+                existingTyping.remove();
             }
 
             c.scrollTop = c.scrollHeight;
