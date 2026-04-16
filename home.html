@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZYNQ Home | Soft Edition</title>
+    <title>ZYNQ Home</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
     
     <style>
     :root {
-        --accent: #818cf8;
-        --accent-soft: #c7d2fe;
-        --bg: #08080a;
-        --text: #eef2ff;
+        --accent: #6366f1;
+        --bg: #060607;
+        --text: #f1f2f8;
     }
 
     * {
@@ -33,7 +32,7 @@
         overflow: hidden;
     }
 
-    /* ACHTERGROND - ZACHTER GEMAAKT */
+    /* ACHTERGROND - SCHERP */
     .bg {
         position: absolute;
         inset: 0;
@@ -41,38 +40,49 @@
         background-image: url('https://i.ytimg.com/vi/FlzJ5FQXBj8/maxresdefault.jpg');
         background-size: cover;
         background-position: center;
-        filter: brightness(0.25) blur(4px); /* Blur toegevoegd voor zachtheid */
-        transform: scale(1.1); /* Scale om witte randen door blur te voorkomen */
+        background-repeat: no-repeat;
         z-index: -2;
     }
 
-    /* Overlay met fijnere korrel */
-    .bg-overlay {
+    /* Overlay met rasterpatroon */
+    .bg::before {
+        content: "";
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at center, rgba(8, 8, 10, 0.4), var(--bg) 90%);
-        z-index: -1;
+        background: rgba(6, 6, 9, 0.45);
+        background-image: 
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
     }
 
-    /* Zachte Glow Blobs */
+    /* Vignette effect */
+    .bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.85));
+    }
+
+    /* Glow Blobs */
     .blob {
         position: absolute;
-        width: 800px;
-        height: 800px;
+        width: 700px;
+        height: 700px;
         background: var(--accent);
-        filter: blur(180px);
-        opacity: 0.12;
+        filter: blur(160px);
+        opacity: 0.07;
         border-radius: 50%;
-        animation: float 25s ease-in-out infinite;
+        animation: float 20s ease-in-out infinite;
         z-index: -1;
     }
 
-    .b1 { top: -300px; left: -200px; opacity: 0.1; }
-    .b2 { bottom: -300px; right: -200px; background: var(--accent-soft); animation-delay: -7s; }
+    .b1 { top: -200px; left: -100px; }
+    .b2 { bottom: -200px; right: -150px; background: #a5b4fc; animation-delay: -5s; }
 
     @keyframes float {
         0%, 100% { transform: translate(0, 0); }
-        50% { transform: translate(40px, 60px); }
+        50% { transform: translate(30px, 40px); }
     }
 
     /* CONTENT */
@@ -82,56 +92,48 @@
         z-index: 10;
     }
 
+    /* LOGO MET HALF OPACITY */
     .logo {
-        font-size: 92px;
-        font-weight: 600; /* Minder zwaar dan 800 */
-        letter-spacing: -2px;
+        font-size: 110px;
+        font-weight: 800;
+        letter-spacing: -5px;
         line-height: 1;
-        background: linear-gradient(to bottom, #ffffff, #d1d5db);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #ffffff;
+        opacity: 0.67; /* 67 ;) */
         margin: 0;
-        /* Zachte schaduw in plaats van felle glow */
-        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        filter: drop-shadow(0 10px 30px rgba(0,0,0,0.4));
+        user-select: none;
     }
 
-    .sub {
-        color: #94a3b8;
-        font-size: 16px;
-        margin-top: 20px;
-        font-weight: 300;
-        letter-spacing: 6px;
-        text-transform: uppercase;
-    }
-
-    /* MINIMALISTISCHE PILL */
+    /* PILL */
     .pill {
         position: fixed;
-        bottom: 40px;
-        padding: 6px 16px;
+        bottom: 30px;
+        padding: 8px 18px;
         border-radius: 100px;
         background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.06);
         color: rgba(255, 255, 255, 0.3);
         font-size: 10px;
+        font-family: monospace;
         letter-spacing: 2px;
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     </style>
 </head>
 <body>
 
-    <div class="bg"></div>
-    <div class="bg-overlay"></div>
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
+    <div class="bg">
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
+    </div>
 
     <div class="wrap">
         <h1 class="logo">ZYNQ</h1>
-        <div class="sub">Play • Chat • Connect</div>
     </div>
 
-    <div class="pill">V1.0.0</div>
+    <div class="pill">V1.0</div>
 
 </body>
 </html>
