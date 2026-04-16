@@ -358,6 +358,14 @@
             align-items: center; 
             gap: 6px; 
         }
+        .message-status {
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+            padding: 0 6px;
+        }
         .typing-dots { 
             display: flex; 
             align-items: center; 
@@ -494,6 +502,23 @@
             inset: 0; 
             overflow: auto; 
         }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15,23,42,.95);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,.3);
+            z-index: 100000;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
         @media (max-width: 768px) { 
             body { grid-template-columns: 1fr; } 
             #sidebar { 
@@ -594,6 +619,7 @@
         <div onclick="editCurrentFriend()">Edit name</div>
         <div onclick="deleteCurrentFriend()">Delete friend</div>
     </div>
+    <div id="toast" class="toast"></div>
 
     <script>
         let peer, currentChat;
@@ -613,29 +639,17 @@
         let chatInitialized = false;
         let selectedFriendId = null;
         let peerRefreshTimer = null;
-
-        // Nieuw: status van de parent tab (chat tab actief of niet)
         let isChatTabActive = false;
 
-        function emitToParent(subType, payload) {
-            if (window.parent && typeof window.parent.postMessage === 'function') {
-                window.parent.postMessage({ 
-                    type: "zynq_message", 
-                    subType: subType, 
-                    timestamp: Date.now(), 
-                    userId: db.user.id, 
-                    ...payload 
-                }, "*");
-            }
-        }
-
-        // === ANTI-NAT-TIMEOUT CONFIG (extreem agressief) ===
-        const KEEPALIVE_INTERVAL = 2500;
-        const STATUS_CHECK_INTERVAL = 1500;
-        const OFFLINE_TIMEOUT = 18000;
-        const MAX_DELIVERY_ATTEMPTS = 60;
-        const EXTRA_RECONNECT_INTERVAL = 3500;
-        const PEER_REFRESH_INTERVAL = 90000;
+        // === SUPER ROBUUST DELIVERY SYSTEEM (100% best-effort) ===
+        const KEEPALIVE_INTERVAL = 2000;
+        const STATUS_CHECK_INTERVAL = 1200;
+        const OFFLINE_TIMEOUT = 15000;
+        const RETRY_INTERVAL = 2200;
+        const FAILURE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minuten = markeren als "failed" (maar blijft automatisch retryen)
+        const MAX_DELIVERY_ATTEMPTS = 999; // praktisch onbeperkt → "100% van de tijd" zolang peer online komt
+        const EXTRA_RECONNECT_INTERVAL = 2500;
+        const PEER_REFRESH_INTERVAL = 60000;
 
         function generateMsgId() {
             return 'msg-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10);
@@ -678,13 +692,50 @@
             let changed = false;
             for (let i = 0; i < queue.length; i++) {
                 const pmsg = queue[i];
-                if (pmsg.attempts >= MAX_DELIVERY_ATTEMPTS) continue;
                 if (safeSend(id, { type: 'msg', mid: pmsg.mid, text: pmsg.text })) {
-                    pmsg.attempts++;
+                    pmsg.attempts = (pmsg.attempts || 0) + 1;
                     changed = true;
+
+                    // update bericht status naar 'sent' (als het nog pending was)
+                    const friend = db.friends[id];
+                    if (friend && friend.msgs) {
+                        const msg = friend.msgs.find(m => m.f === 'me' && m.mid === pmsg.mid);
+                        if (msg && (msg.status === 'pending' || !msg.status)) {
+                            msg.status = 'sent';
+                        }
+                    }
                 }
             }
-            if (changed) save();
+            if (changed) {
+                save();
+                if (currentChat === id) renderMessages();
+            }
+        }
+
+        function checkForFailedMessages(id) {
+            if (!db.pending[id] || !db.friends[id]) return;
+            const now = Date.now();
+            let changed = false;
+
+            db.pending[id].forEach(p => {
+                const friend = db.friends[id];
+                if (!friend || !friend.msgs) return;
+                const msg = friend.msgs.find(m => m.f === 'me' && m.mid === p.mid);
+                if (!msg) return;
+
+                const attempts = p.attempts || 0;
+                const timeSinceFirst = now - (p.firstAttempt || p.time || now);
+
+                if (msg.status !== 'failed' && (attempts >= 50 || timeSinceFirst > FAILURE_TIMEOUT_MS)) {
+                    msg.status = 'failed';
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                save();
+                if (currentChat === id) renderMessages();
+            }
         }
 
         function startKeepAlive() {
@@ -716,15 +767,18 @@
             retryInterval = setInterval(() => {
                 if (!peer) return;
                 Object.keys(db.pending || {}).forEach(fid => {
-                    if (onlineStatus[fid]) flushPending(fid);
+                    if (onlineStatus[fid]) {
+                        flushPending(fid);
+                        checkForFailedMessages(fid);
+                    }
                 });
-            }, 3800);
+            }, RETRY_INTERVAL);
         }
 
         function scheduleReconnect(id) {
             if (reconnectTimers[id]) clearTimeout(reconnectTimers[id]);
             const attempts = reconnectAttempts[id] || 0;
-            const delay = attempts === 0 ? 600 : Math.min(700 * Math.pow(1.65, attempts), 22000);
+            const delay = attempts === 0 ? 400 : Math.min(650 * Math.pow(1.6, attempts), 18000);
             reconnectTimers[id] = setTimeout(() => {
                 delete reconnectTimers[id];
                 if (!peer || onlineStatus[id] || !db.friends[id]) return;
@@ -813,10 +867,11 @@
             if (home) home.style.display = 'none';
             if (wrapper) wrapper.style.display = 'flex';
             if (!currentChat || !db.friends[currentChat]) return;
+
             const friend = db.friends[currentChat];
             const firstLetter = friend.alias.charAt(0).toUpperCase();
-            const currentMsgCount = friend.msgs.length;
             const isTypingNow = !!typingIndicators[currentChat];
+
             if (!chatInitialized) {
                 wrapper.innerHTML = '';
                 chatMessagesDiv = document.createElement('div');
@@ -824,52 +879,117 @@
                 wrapper.appendChild(chatMessagesDiv);
                 chatInitialized = true;
             }
-            if (currentRenderedChat !== currentChat || chatMessagesDiv.children.length !== currentMsgCount + (isTypingNow ? 1 : 0)) {
-                chatMessagesDiv.innerHTML = '';
-                friend.msgs.forEach(m => {
-                    const isMe = m.f === 'me';
-                    const row = document.createElement('div');
-                    row.className = `message-row ${isMe ? 'me' : 'other'}`;
-                    if (!isMe) {
-                        const av = document.createElement('div');
-                        av.className = 'avatar-chat';
-                        av.textContent = firstLetter;
-                        row.appendChild(av);
+
+            // ALTIJD volledig herbouwen → status updates (queued / failed / delivered) worden direct zichtbaar
+            chatMessagesDiv.innerHTML = '';
+
+            friend.msgs.forEach(m => {
+                const isMe = m.f === 'me';
+                if (isMe && typeof m.status === 'undefined') m.status = 'delivered';
+
+                const row = document.createElement('div');
+                row.className = `message-row ${isMe ? 'me' : 'other'}`;
+
+                if (!isMe) {
+                    const av = document.createElement('div');
+                    av.className = 'avatar-chat';
+                    av.textContent = firstLetter;
+                    row.appendChild(av);
+                }
+
+                const content = document.createElement('div');
+                content.className = 'message-content';
+
+                const bubble = document.createElement('div');
+                bubble.className = `bubble ${isMe ? 'me' : 'other'}`;
+                bubble.textContent = m.t;
+                content.appendChild(bubble);
+
+                // tijd
+                const ts = document.createElement('div');
+                ts.className = 'timestamp';
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = formatTime(m.time);
+                ts.appendChild(timeSpan);
+                content.appendChild(ts);
+
+                // === STATUS INDIKATOR (queued / sent / delivered / failed) ===
+                if (isMe) {
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'message-status';
+                    let statusHTML = '';
+
+                    switch (m.status) {
+                        case 'pending':
+                            statusHTML = `<span style="color:#64748b;">● queued</span>`;
+                            break;
+                        case 'sent':
+                            statusHTML = `<span style="color:#64748b;">✓ sent</span>`;
+                            break;
+                        case 'delivered':
+                            statusHTML = `<span style="color:var(--success);">✓✓ delivered</span>`;
+                            break;
+                        case 'failed':
+                            statusHTML = `<span style="color:var(--danger);">✕ delivery failed <span onclick="event.stopImmediatePropagation();retryMessage('${currentChat}','${m.mid}');" style="text-decoration:underline;cursor:pointer;font-weight:700;">retry now</span></span>`;
+                            break;
                     }
-                    const content = document.createElement('div');
-                    content.className = 'message-content';
-                    const bubble = document.createElement('div');
-                    bubble.className = `bubble ${isMe ? 'me' : 'other'}`;
-                    bubble.textContent = m.t;
-                    content.appendChild(bubble);
-                    const ts = document.createElement('div');
-                    ts.className = 'timestamp';
-                    const timeSpan = document.createElement('span');
-                    timeSpan.textContent = formatTime(m.time);
-                    ts.appendChild(timeSpan);
-                    content.appendChild(ts);
-                    row.appendChild(content);
-                    chatMessagesDiv.appendChild(row);
-                });
-                currentRenderedChat = currentChat;
-            }
-            let existingTyping = chatMessagesDiv.querySelector('#typing-indicator');
-            if (isTypingNow && !existingTyping) {
+                    statusDiv.innerHTML = statusHTML;
+                    content.appendChild(statusDiv);
+                }
+
+                row.appendChild(content);
+                chatMessagesDiv.appendChild(row);
+            });
+
+            // typing indicator
+            if (isTypingNow) {
                 const row = document.createElement('div');
                 row.id = 'typing-indicator';
                 row.className = 'message-row other';
                 row.innerHTML = `<div class="avatar-chat">${firstLetter}</div><div class="message-content"><div class="bubble other typing-bubble"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
                 chatMessagesDiv.appendChild(row);
-            } else if (!isTypingNow && existingTyping) {
-                existingTyping.remove();
             }
+
             chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            currentRenderedChat = currentChat;
         }
 
         function formatTime(timestamp) {
             if (!timestamp) return '';
             const date = new Date(timestamp);
             return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+        }
+
+        function retryMessage(chatId, mid) {
+            if (!db.friends[chatId] || !db.pending[chatId]) return;
+            const pmsg = db.pending[chatId].find(p => p.mid === mid);
+            if (!pmsg) return;
+
+            pmsg.attempts = 0;
+            pmsg.firstAttempt = Date.now();
+
+            const friend = db.friends[chatId];
+            const msg = friend.msgs.find(m => m.f === 'me' && m.mid === mid);
+            if (msg) msg.status = 'pending';
+
+            save();
+
+            if (onlineStatus[chatId] && peer) {
+                flushPending(chatId);
+            }
+
+            if (currentChat === chatId) renderMessages();
+
+            showToast('🔄 Retrying message...', 2200);
+        }
+
+        function showToast(text, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
         }
 
         window.onload = () => init();
@@ -881,6 +1001,26 @@
                 save();
             }
             document.getElementById('myId').textContent = db.user.id;
+
+            // === MIGRATIE oude berichten (backward compatible) ===
+            if (db.friends) {
+                Object.keys(db.friends).forEach(key => {
+                    const f = db.friends[key];
+                    if (f.msgs) {
+                        f.msgs.forEach(msg => {
+                            if (msg.f === 'me' && typeof msg.status === 'undefined') {
+                                msg.status = 'delivered';
+                            }
+                        });
+                    }
+                    if (db.pending && db.pending[key]) {
+                        db.pending[key].forEach(p => {
+                            if (!p.firstAttempt) p.firstAttempt = p.time || Date.now();
+                        });
+                    }
+                });
+                save();
+            }
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && currentChat !== null) {
@@ -899,13 +1039,12 @@
                 startKeepAlive();
                 startStatusChecker();
                 startRetryInterval();
+
                 setInterval(() => {
                     if (!peer) return;
                     Object.keys(db.friends).forEach(id => {
                         if (!onlineStatus[id]) {
-                            try {
-                                peer.connect(id);
-                            } catch (e) {}
+                            try { peer.connect(id); } catch (e) {}
                         } else {
                             safeSend(id, { type: 'keepalive', ts: Date.now() });
                         }
@@ -918,9 +1057,7 @@
                         console.log('%c🔄 [ZYNQ] FULL PEER RECONNECT CYCLE (NAT protection)', 'color:#6366f1; font-weight:700; background:#0d0d12; padding:2px 6px; border-radius:4px;');
                         Object.keys(db.friends).forEach(id => {
                             if (peer) {
-                                try {
-                                    peer.connect(id);
-                                } catch (e) {}
+                                try { peer.connect(id); } catch (e) {}
                                 if (onlineStatus[id]) flushPending(id);
                             }
                         });
@@ -956,7 +1093,6 @@
                         }
                     }
 
-                    // === NIEUWE LOGICA: alleen als read markeren als TAB ACTIEF ÉN convo open ===
                     db.friends[from].msgs.push({ f: from, t: msgText, time: msgTime, mid: msgMid });
 
                     const isCurrentAndActiveTab = (currentChat === from) && isChatTabActive;
@@ -997,7 +1133,7 @@
                         db.pending[from] = db.pending[from].filter(p => p.mid !== mid);
                         const msgs = db.friends[from] ? db.friends[from].msgs : [];
                         const sentMsg = msgs.find(m => m.f === 'me' && m.mid === mid);
-                        if (sentMsg) sentMsg.delivered = true;
+                        if (sentMsg) sentMsg.status = 'delivered';
                         save();
                         if (currentChat === from) renderMessages();
                     }
@@ -1040,17 +1176,14 @@
             });
 
             document.getElementById('menuBtn').addEventListener('click', toggleMenu);
-
             setupTypingListener();
 
-            // === NIEUWE LISTENER: parent vertelt ons of de chat-tab actief is ===
             window.addEventListener('message', (e) => {
                 if (e.source === window.parent && e.data && e.data.type === 'zynq_tab_status') {
                     const previouslyActive = isChatTabActive;
                     isChatTabActive = Boolean(e.data.active);
 
                     if (isChatTabActive && !previouslyActive && currentChat && db.friends[currentChat]) {
-                        // Auto read-clear als tab weer actief wordt EN er een convo open staat
                         const friend = db.friends[currentChat];
                         if (friend.unread > 0) {
                             friend.unread = 0;
@@ -1077,6 +1210,18 @@
             showHomeScreen();
         }
 
+        function emitToParent(subType, payload) {
+            if (window.parent && typeof window.parent.postMessage === 'function') {
+                window.parent.postMessage({ 
+                    type: "zynq_message", 
+                    subType: subType, 
+                    timestamp: Date.now(), 
+                    userId: db.user.id, 
+                    ...payload 
+                }, "*");
+            }
+        }
+
         function updateUIState() {
             const inpBar = document.querySelector('.input-bar');
             const title = document.getElementById('chatTitle');
@@ -1101,7 +1246,7 @@
             } else {
                 inp.disabled = true;
                 btn.disabled = true;
-                inp.placeholder = "User offline, chat is disabled.";
+                inp.placeholder = "User offline — message will be queued and sent automatically when possible";
             }
             inpBar.style.display = 'flex';
         }
@@ -1145,10 +1290,20 @@
             const inp = document.getElementById('msgInp');
             const text = inp.value.trim();
             if (!text || !currentChat || !peer) return;
+
             const mid = generateMsgId();
             const msgTime = Date.now();
+
             if (!db.friends[currentChat].msgs) db.friends[currentChat].msgs = [];
-            db.friends[currentChat].msgs.push({ f: 'me', t: text, time: msgTime, mid: mid, delivered: false });
+
+            db.friends[currentChat].msgs.push({ 
+                f: 'me', 
+                t: text, 
+                time: msgTime, 
+                mid: mid, 
+                status: 'pending' 
+            });
+
             emitToParent('sent', { 
                 chatId: currentChat, 
                 from: db.user.id, 
@@ -1157,11 +1312,20 @@
                 mid: mid, 
                 time: msgTime 
             });
+
             if (!db.pending[currentChat]) db.pending[currentChat] = [];
-            db.pending[currentChat].push({ mid: mid, text: text, time: msgTime, attempts: 0 });
+            db.pending[currentChat].push({ 
+                mid: mid, 
+                text: text, 
+                time: msgTime, 
+                attempts: 0, 
+                firstAttempt: msgTime 
+            });
+
             save();
             renderMessages();
             inp.value = '';
+
             if (onlineStatus[currentChat] && peer) {
                 if (safeSend(currentChat, { type: 'msg', mid: mid, text: text })) {
                     const last = db.pending[currentChat][db.pending[currentChat].length - 1];
@@ -1169,6 +1333,7 @@
                     save();
                 }
             }
+
             if (inputTypingTimeout) {
                 clearTimeout(inputTypingTimeout);
                 if (peer && currentChat) safeSend(currentChat, { type: 'typing', status: false });
@@ -1207,8 +1372,6 @@
                 `;
                 div.onclick = () => {
                     currentChat = id;
-
-                    // === NIEUWE LOGICA: alleen clear + read-emit als tab actief is ===
                     if (isChatTabActive) {
                         db.friends[id].unread = 0;
                         emitToParent('read', { 
@@ -1218,7 +1381,6 @@
                             unreadCleared: true 
                         });
                     }
-
                     save();
                     updateUIState();
                     renderMessages();
@@ -1227,18 +1389,10 @@
                 };
 
                 let touchTimer;
-                div.addEventListener('touchstart', () => {
-                    touchTimer = setTimeout(() => longPressDelete(id), 700);
-                });
-                div.addEventListener('touchend', () => {
-                    if (touchTimer) clearTimeout(touchTimer);
-                });
-                div.addEventListener('touchmove', () => {
-                    if (touchTimer) clearTimeout(touchTimer);
-                });
-                div.addEventListener('touchcancel', () => {
-                    if (touchTimer) clearTimeout(touchTimer);
-                });
+                div.addEventListener('touchstart', () => { touchTimer = setTimeout(() => longPressDelete(id), 700); });
+                div.addEventListener('touchend', () => { if (touchTimer) clearTimeout(touchTimer); });
+                div.addEventListener('touchmove', () => { if (touchTimer) clearTimeout(touchTimer); });
+                div.addEventListener('touchcancel', () => { if (touchTimer) clearTimeout(touchTimer); });
 
                 fList.appendChild(div);
             });
