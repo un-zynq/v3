@@ -163,7 +163,7 @@ function sw(id, el, index){
   indicator.style.transform = `translateY(${index * 60}px)`;
 }
 
-// === CHAT STATE HANDLER (INDEX) ===
+// === FINAL BADGE LOGIC (CORRECT VISIBILITY FIX) ===
 (function () {
 
   let chatState = {
@@ -176,8 +176,20 @@ function sw(id, el, index){
   const badge = document.getElementById('chat-badge');
 
   function updateBadge() {
+
+    // 🔥 CRUCIALE FIX:
+    // alleen verbergen als:
+    // - je op chat tab zit
+    // - EN iframe effectief zichtbaar is
+    // - EN je in een gesprek zit
+
+    const chatIframe = document.getElementById('chat');
+    const chatVisible = chatIframe.classList.contains('active');
+
     const shouldHide =
-      currentTab === 'chat' && chatState.inChat;
+      currentTab === 'chat' &&
+      chatVisible &&
+      chatState.inChat;
 
     if (chatState.hasUnread && !shouldHide) {
       badge.classList.add('visible');
@@ -197,7 +209,7 @@ function sw(id, el, index){
     }
   });
 
-  // override je sw()
+  // override sw
   const originalSw = window.sw;
   window.sw = function (id, el, index) {
     currentTab = id;
