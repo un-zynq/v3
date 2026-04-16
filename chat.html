@@ -1306,6 +1306,62 @@
         function closeHelpModal() {
             document.getElementById('helpModal').style.display = 'none';
         }
+        // === UNREAD EVENT BRIDGE TO PARENT ===
+(function () {
+    let lastUnreadCount = 0;
+
+    function getUnreadCount() {
+        if (!db || !db.friends) return 0;
+        return Object.values(db.friends).reduce((total, f) => {
+            return total + (f.unread || 0);
+        }, 0);
+    }
+
+    function emitUnreadEvent(count) {
+        const hasUnread = count > 0;
+
+        const payload = {
+            type: 'zynq_unread',
+            hasUnread: hasUnread,
+            count: count,
+            timestamp: Date.now()
+        };
+
+        // naar parent sturen (iframe support)
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage(payload, '*');
+        }
+
+        // ook lokaal event dispatchen (optioneel handig)
+        window.dispatchEvent(new CustomEvent('zynq_unread', { detail: payload }));
+    }
+
+    function checkUnreadChange() {
+        const current = getUnreadCount();
+
+        if (current !== lastUnreadCount) {
+            lastUnreadCount = current;
+            emitUnreadEvent(current);
+        }
+    }
+
+    // Hook in render (wordt vaak aangeroepen → perfect moment)
+    const originalRender = window.render;
+    window.render = function () {
+        if (originalRender) originalRender.apply(this, arguments);
+        checkUnreadChange();
+    };
+
+    // Hook in renderMessages (extra zekerheid)
+    const originalRenderMessages = window.renderMessages;
+    window.renderMessages = function () {
+        if (originalRenderMessages) originalRenderMessages.apply(this, arguments);
+        checkUnreadChange();
+    };
+
+    // Init check (bij laden)
+    setTimeout(checkUnreadChange, 500);
+})();
     </script>
 </body>
 </html>
