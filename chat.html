@@ -8,6 +8,7 @@
     <style>:root{--accent:#6366f1;--bg:#060607;--sidebar-bg:#141417;--chat-bg:#1c1d21;--input-bg:#25272d;--text-main:#f1f2f8;--text-muted:#8f94a3;--success:#10b981;--danger:#f43f5e}*{box-sizing:border-box}html{height:100dvh}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text-main);height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template-columns:300px 1fr;grid-template-rows:1fr}#sidebar{background:var(--sidebar-bg);display:grid;grid-template-rows:auto auto 1fr;border-right:1px solid #0a0a0b;box-shadow:4px 0 12px -4px rgba(0,0,0,.6);z-index:1000;transition:.4s cubic-bezier(.32,.72,0,1)}.sidebar-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.2)}.logo{font-size:22px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,var(--accent),#a5b4fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.add-btn{background:0 0;border:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-main);padding:0;transition:.2s cubic-bezier(.4,0,.2,1)}.add-btn:hover{transform:scale(1.12)}.my-profile{padding:20px;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.06)}#myId{background:#0a0a0b;padding:14px 16px;border-radius:12px;font-family:'SF Mono',monospace;color:var(--accent);font-size:13.5px;cursor:pointer;text-align:center;border:1px solid rgba(99,102,241,.3);transition:.2s cubic-bezier(.4,0,.2,1);box-shadow:inset 0 2px 0 rgba(255,255,255,.05)}#myId:hover{background:#111113;border-color:#a5b4fc;transform:translateY(-1px)}#friendsList{padding:12px 8px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#6366f1 #25272d}.friend-row{padding:14px 16px;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:14px;cursor:pointer;border-radius:14px;margin-bottom:6px;transition:.2s cubic-bezier(.4,0,.2,1);position:relative}.friend-row:hover{background:rgba(255,255,255,.08);transform:translateX(4px)}.friend-row.active{background:rgba(255,255,255,.12);color:#fff}.avatar-container{position:relative;width:48px;height:48px}.avatar{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),#a5b4fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#fff;box-shadow:0 4px 12px -2px rgba(99,102,241,.4)}.status-dot{position:absolute;bottom:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--sidebar-bg);border:3px solid var(--sidebar-bg);box-shadow:0 0 0 3px rgba(16,185,129,.3)}.status-dot.online{background:var(--success);animation:pulse 2s infinite}@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(16,185,129,.3)}50%{box-shadow:0 0 0 7px rgba(16,185,129,0)}}.friend-info{min-width:0;overflow:hidden}.friend-name-container{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}.friend-name{font-weight:600;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}.unread-pill{background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:9999px;white-space:nowrap;flex-shrink:0;min-width:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}.friend-id{font-size:12px;font-family:'SF Mono',monospace;opacity:.65;margin-top:2px}.menu-btn{opacity:0;background:0 0;border:none;color:var(--text-muted);padding:6px;border-radius:10px;transition:.2s ease;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:36px;height:36px}.friend-row:hover .menu-btn{opacity:1}#main{display:grid;grid-template-rows:64px 1fr auto;background:var(--chat-bg);position:relative;height:100%;min-height:0}.header{padding:0 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(0,0,0,.3);background:var(--chat-bg);box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:10}.burger-btn{background:0 0;border:none;width:44px;height:44px;display:none;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;gap:5px;padding:0}.burger-btn span{width:24px;height:2.5px;background:var(--text-main);border-radius:9999px;transition:.3s cubic-bezier(.4,0,.2,1)}.burger-btn.open span:nth-child(1){transform:rotate(45deg) translate(5px,6px)}.burger-btn.open span:nth-child(2){opacity:0;transform:scale(0)}.burger-btn.open span:nth-child(3){transform:rotate(-45deg) translate(7px,-6px)}#chatHeaderContent{display:flex;align-items:center;gap:14px;flex:1}#chatTitle{font-size:19px;font-weight:700;letter-spacing:-.5px}#onlineIndicator{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px}#chat{padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--chat-bg);scroll-behavior:smooth;flex:1;min-height:0;position:relative}.message-row{display:flex;gap:10px;max-width:85%;margin-bottom:4px}.message-row.me{margin-left:auto;flex-direction:row-reverse}.message-row.other{margin-right:auto}.avatar-chat{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#a5b4fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;margin-top:2px;box-shadow:0 2px 8px -2px rgba(99,102,241,.4)}.message-content{display:flex;flex-direction:column;gap:3px;max-width:100%}.bubble{display:inline-block;max-width:100%;padding:14px 20px;border-radius:22px;font-size:15.5px;line-height:1.4;white-space:pre-wrap;word-break:keep-all;overflow-wrap:break-word;box-shadow:0 2px 6px rgba(0,0,0,.15)}.bubble.me{background:var(--accent);color:#fff;border-bottom-right-radius:6px}.bubble.other{background:var(--input-bg);border-bottom-left-radius:6px}.timestamp{font-size:11px;color:var(--text-muted);padding:0 6px;opacity:.85;font-weight:500;display:flex;align-items:center;gap:6px}.typing-dots{display:flex;align-items:center;gap:4px}.typing-dot{width:6px;height:6px;background:#8f94a3;border-radius:50%;animation:typingBounce 1.25s infinite ease-in-out}.typing-dot:nth-child(2){animation-delay:.12s}.typing-dot:nth-child(3){animation-delay:.24s}@keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}.bubble.typing-bubble{padding:11px 20px;display:flex;align-items:center}input{flex:1;background:var(--input-bg);border:none;padding:16px 22px;border-radius:9999px;color:#fff;font-size:16px;outline:none;box-shadow:inset 0 2px 6px rgba(0,0,0,.2)}input::placeholder{color:var(--text-muted)}button{background:var(--accent);color:#fff;border:none;padding:0 32px;height:52px;border-radius:9999px;cursor:pointer;font-weight:700;font-size:14px;letter-spacing:.5px;transition:.2s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 12px -4px var(--accent)}button:hover:not(:disabled){transform:translateY(-1px) scale(1.03);box-shadow:0 8px 20px -4px var(--accent)}button:disabled{background:#3b3d44;color:#8f94a3;opacity:.75;cursor:not-allowed;box-shadow:none}.input-bar{display:flex;align-items:center;gap:12px;padding:16px 24px;background:var(--chat-bg);border-top:1px solid rgba(0,0,0,.3);box-shadow:0 -4px 12px -4px rgba(0,0,0,.4)}#overlay{position:fixed;inset:0;background:rgba(6,6,7,.75);z-index:900;opacity:0;pointer-events:none;transition:opacity .4s cubic-bezier(.32,.72,0,1);display:none}.modal{position:fixed;inset:0;background:rgba(6,6,7,.92);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(12px)}.modal-content{background:var(--sidebar-bg);padding:32px;border-radius:20px;width:100%;max-width:420px;box-shadow:0 25px 50px -12px rgb(0 0 0 /.6);margin:20px;text-align:center}#contextMenu{position:absolute;background:var(--sidebar-bg);border-radius:14px;box-shadow:0 15px 30px -10px rgba(0,0,0,.7);z-index:10000;min-width:170px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:none}#contextMenu div{padding:14px 20px;cursor:pointer;font-size:15px;transition:.2s ease}#contextMenu div:hover{background:rgba(255,255,255,.1)}#contextMenu div:last-child{color:var(--danger)}#homeScreen{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:40px 24px;background:var(--chat-bg);position:absolute;inset:0;overflow:auto}@media(max-width:768px){body{grid-template-columns:1fr}#sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}.burger-btn{display:flex}.message-row{max-width:90%}}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:#6366f1;border-radius:9999px}</style>
 </head>
 <body>
+    <!-- SIDEBAR -->
     <div id="sidebar">
         <div class="sidebar-header">
             <div class="logo">ZYNQ</div>
@@ -24,7 +25,7 @@
         </div>
         <div id="friendsList"></div>
     </div>
-
+    <!-- MAIN CHAT -->
     <div id="main">
         <div class="header">
             <button id="menuBtn" class="burger-btn">
@@ -36,27 +37,36 @@
             </div>
             <button onclick="showHelpModal()" style="margin-left:auto;background:none;border:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:26px;cursor:pointer;opacity:0.7">?</button>
         </div>
-
+        <!-- CHAT AREA -->
         <div id="chat">
+            <!-- === HOMEPAGE DIE JE VOLLEDIG KUNT AANPASSEN === -->
             <div id="homeScreen" style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <!-- background image layer -->
                 <div style="position:absolute;inset:0;background-image:url('https://i.ytimg.com/vi/FlzJ5FQXBj8/maxresdefault.jpg');background-size:cover;background-position:center;opacity:0.5;transform:scale(1.02);"></div>
+                <!-- soft dark overlay -->
                 <div style="position:absolute;inset:0;background:rgba(0,0,0,0.25);"></div>
+                <!-- content -->
                 <div style="position:relative;z-index:1;max-width:420px;width:100%;text-align:center;color:rgba(229,231,235,0.66);">
-                    <div style="font-size:92px;line-height:1;margin-bottom:8px;font-weight:900;letter-spacing:-6px;">ZYNQ</div>
-                    <p style="font-size:19px;margin:0 0 32px;line-height:1.5;color:rgba(209,213,219,0.66);">Chat with your friends on ZYNQ!</p>
+                    <div style="font-size:92px;line-height:1;margin-bottom:8px;font-weight:900;letter-spacing:-6px;">
+                        ZYNQ
+                    </div>
+                    <p style="font-size:19px;margin:0 0 32px;line-height:1.5;color:rgba(209,213,219,0.66);">
+                        Chat with your friends on ZYNQ!
+                    </p>
                 </div>
             </div>
+            <!-- berichten komen hier (wordt automatisch beheerd) -->
             <div id="messagesWrapper" style="display:none;height:100%;flex-direction:column"></div>
         </div>
-
-        <div id="inputBar" class="input-bar" style="display:none">
+        <div class="input-bar">
             <input id="msgInp" placeholder="Type your message here..." disabled onkeypress="if(event.key==='Enter') send()">
             <button id="sendBtn" onclick="send()" disabled>SEND</button>
         </div>
     </div>
-
+    <!-- OVERLAYS -->
     <div id="overlay" onclick="toggleMenu()"></div>
-
+  
+    <!-- add friend modal -->
     <div id="friendModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle" style="margin-top:0">Add Friend</h2>
@@ -76,7 +86,7 @@
             </div>
         </div>
     </div>
-
+    <!-- inactive tab -->
     <div id="inactiveOverlay" class="modal">
         <div class="modal-content">
             <h2>Tab Inactive</h2>
@@ -84,18 +94,17 @@
             <button onclick="window.location.reload()" style="margin-top: 12px;">ACTIVATE</button>
         </div>
     </div>
-
+    <!-- klein help menu -->
     <div id="helpModal" class="modal">
         <div class="modal-content" style="max-width:380px">
             <h2 style="margin-top:0">Help &amp; Shortcuts</h2>
             <div style="text-align:left;font-size:15.5px;line-height:1.8">
-                <div><strong>ESC</strong> → Close current chat</div>
-                <div><strong>+</strong> → Add friend</div>
+                <div><strong>ESC</strong> → huidige chat sluiten</div>
+                <div><strong>+</strong> → vriend toevoegen</div>
             </div>
-            <button onclick="closeHelpModal()" style="margin-top:24px;width:100%;height:52px">OK, got it</button>
+            <button onclick="closeHelpModal()" style="margin-top:24px;width:100%;height:52px">OK, begrepen</button>
         </div>
     </div>
-
     <div id="contextMenu">
         <div onclick="editCurrentFriend()">Edit name</div>
         <div onclick="deleteCurrentFriend()">Delete friend</div>
@@ -113,6 +122,7 @@
         let db = JSON.parse(localStorage.getItem('zynq_chat_v1')) || { user: { id: '' }, friends: {}, pending: {} };
         let reconnectAttempts = {};
         let reconnectTimers = {};
+        let retryInterval = null;
         let lastNetworkCheck = Date.now();
         let keepaliveInterval = null;
         let statusCheckerInterval = null;
@@ -168,9 +178,8 @@
             for (let i = 0; i < queue.length; i++) {
                 const pmsg = queue[i];
                 if (pmsg.attempts >= MAX_DELIVERY_ATTEMPTS) continue;
-                if (pmsg.attempts > 0) continue;
                 if (safeSend(id, { type: 'msg', mid: pmsg.mid, text: pmsg.text })) {
-                    pmsg.attempts = 1;
+                    pmsg.attempts++;
                     changed = true;
                 }
             }
@@ -201,7 +210,8 @@
             }
             if (keepaliveInterval) clearInterval(keepaliveInterval);
             if (statusCheckerInterval) clearInterval(statusCheckerInterval);
-            keepaliveInterval = statusCheckerInterval = null;
+            if (retryInterval) clearInterval(retryInterval);
+            keepaliveInterval = statusCheckerInterval = retryInterval = null;
             onlineStatus = {};
             lastSeen = {};
             currentChat = null;
@@ -220,7 +230,9 @@
             keepaliveInterval = setInterval(() => {
                 if (!isActiveTab || !peer) return;
                 Object.keys(db.friends).forEach(id => {
-                    if (onlineStatus[id]) safeSend(id, { type: 'keepalive', ts: Date.now() });
+                    if (onlineStatus[id]) {
+                        safeSend(id, { type: 'keepalive', ts: Date.now() });
+                    }
                 });
             }, KEEPALIVE_INTERVAL);
         }
@@ -237,6 +249,16 @@
                     }
                 });
             }, STATUS_CHECK_INTERVAL);
+        }
+
+        function startRetryInterval() {
+            if (retryInterval) clearInterval(retryInterval);
+            retryInterval = setInterval(() => {
+                if (!isActiveTab || !peer) return;
+                Object.keys(db.pending || {}).forEach(fid => {
+                    if (onlineStatus[fid]) flushPending(fid);
+                });
+            }, 4500);
         }
 
         function scheduleReconnect(id) {
@@ -326,7 +348,7 @@
                 wrapper.appendChild(chatMessagesDiv);
                 chatInitialized = true;
             }
-            if (currentRenderedChat !== currentChat || chatMessagesDiv.children.length !== currentMsgCount) {
+            if (currentRenderedChat !== currentChat || chatMessagesDiv.children.length !== currentMsgCount + (isTypingNow ? 1 : 0)) {
                 chatMessagesDiv.innerHTML = '';
                 friend.msgs.forEach(m => {
                     const isMe = m.f === 'me';
@@ -362,7 +384,9 @@
                 row.className = 'message-row other';
                 row.innerHTML = `<div class="avatar-chat">${firstLetter}</div><div class="message-content"><div class="bubble other typing-bubble"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
                 chatMessagesDiv.appendChild(row);
-            } else if (!isTypingNow && existingTyping) existingTyping.remove();
+            } else if (!isTypingNow && existingTyping) {
+                existingTyping.remove();
+            }
             chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
         }
 
@@ -386,6 +410,7 @@
                 save();
             }
             document.getElementById('myId').textContent = db.user.id;
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && currentChat !== null) {
                     currentChat = null;
@@ -394,18 +419,20 @@
                     render();
                 }
             });
+
             peer = new ZYNQ.Peer({
                 id: db.user.id,
                 txt: true,
                 video: false,
                 audio: false
             });
+
             peer.on('ready', (id) => {
                 document.getElementById('myId').textContent = id;
                 let retries = 0;
-                const retryInterval = setInterval(() => {
+                const retryIntervalCheck = setInterval(() => {
                     if (!isActiveTab || retries >= 12) {
-                        clearInterval(retryInterval);
+                        clearInterval(retryIntervalCheck);
                         setInterval(() => { if (isActiveTab) checkAllStatuses(); }, 8000);
                         return;
                     }
@@ -415,8 +442,10 @@
                 checkAllStatuses();
                 startKeepAlive();
                 startStatusChecker();
+                startRetryInterval();
                 Object.keys(db.pending).forEach(fid => { if (onlineStatus[fid]) flushPending(fid); });
             });
+
             peer.on('message', (payload) => {
                 const data = payload.data;
                 const from = payload.from;
@@ -457,6 +486,7 @@
                     safeSend(from, { type: 'keepalive', ts: Date.now() });
                 }
             });
+
             peer.on('open', (id) => {
                 if (isActiveTab) {
                     onlineStatus[id] = true;
@@ -466,22 +496,27 @@
                     render();
                 }
             });
+
             peer.on('close', ({id}) => {
                 if (isActiveTab) {
                     markAsOffline(id);
                     if (db.friends[id]) scheduleReconnect(id);
                 }
             });
+
             peer.on('error', () => {});
+
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible' && isActiveTab) checkAllStatuses();
             });
+
             window.addEventListener('online', () => {
                 if (isActiveTab && Date.now() - lastNetworkCheck > 3000) {
                     lastNetworkCheck = Date.now();
                     checkAllStatuses();
                 }
             });
+
             window.addEventListener('storage', (e) => {
                 if (!isActiveTab) return;
                 if (e.key === ACTIVE_KEY && e.newValue) {
@@ -494,12 +529,14 @@
                     } catch(e) {}
                 }
             });
+
             document.getElementById('menuBtn').addEventListener('click', toggleMenu);
             setupTypingListener();
             document.addEventListener('click', (e) => {
                 const menu = document.getElementById('contextMenu');
                 if (menu && menu.style.display === 'block' && !menu.contains(e.target)) closeContextMenu();
             });
+
             render();
             updateUIState();
             showHomeScreen();
@@ -507,7 +544,7 @@
 
         function updateUIState() {
             if (!isActiveTab) return;
-            const inpBar = document.getElementById('inputBar');
+            const inpBar = document.querySelector('.input-bar');
             const title = document.getElementById('chatTitle');
             const indicator = document.getElementById('onlineIndicator');
             const inp = document.getElementById('msgInp');
