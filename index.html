@@ -168,22 +168,21 @@ function sw(id, el, index){
   indicator.style.transform = `translateY(${index * 60}px)`;
 }
 
-window.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'zynq_state') {
-    const badge = document.getElementById('chat-badge');
+function updateBadge(hasUnread){
+  const badge = document.getElementById('chat-badge');
+  const chatTabIsActive = document.getElementById('chat').classList.contains('active');
 
-    const chatTabIsActive = activeTab === 'chat';
-
-    const shouldShow =
-      event.data.hasUnread &&
-      !chatTabIsActive;
-
-    if (shouldShow) {
-      badge.classList.add('visible');
-    } else {
-      badge.classList.remove('visible');
-    }
+  if (hasUnread && !chatTabIsActive) {
+    badge.classList.add('visible');
+  } else {
+    badge.classList.remove('visible');
   }
+}
+
+window.addEventListener('message', function(event) {
+  if (!event.data || event.data.type !== 'zynq_state') return;
+
+  updateBadge(event.data.hasUnread);
 });
 </script>
 
