@@ -149,8 +149,7 @@ iframe.active{
 <script>
 lucide.createIcons();
 
-let activeTab = "home";
-let chatState = { hasUnread: false, inChat: false };
+let activeTab = 'home';
 
 function sw(id, el, index){
   activeTab = id;
@@ -162,38 +161,30 @@ function sw(id, el, index){
   document.querySelectorAll(".icon-btn").forEach(b => {
     b.classList.remove("active");
   });
+
   el.classList.add("active");
 
   const indicator = document.getElementById('indicator');
   indicator.style.transform = `translateY(${index * 60}px)`;
-
-  const chatFrame = document.getElementById("chat");
-  if (chatFrame && chatFrame.contentWindow) {
-    chatFrame.contentWindow.postMessage({
-      type: "zynq_visibility",
-      active: id === "chat"
-    }, "*");
-  }
-
-  updateBadge();
 }
 
-window.addEventListener('message', (event) => {
+window.addEventListener('message', function(event) {
   if (event.data && event.data.type === 'zynq_state') {
-    chatState = event.data;
-    updateBadge();
+    const badge = document.getElementById('chat-badge');
+
+    const chatTabIsActive = activeTab === 'chat';
+
+    const shouldShow =
+      event.data.hasUnread &&
+      !chatTabIsActive;
+
+    if (shouldShow) {
+      badge.classList.add('visible');
+    } else {
+      badge.classList.remove('visible');
+    }
   }
 });
-
-function updateBadge() {
-  const badge = document.getElementById('chat-badge');
-
-  if (chatState.hasUnread && !(activeTab === "chat" && chatState.inChat)) {
-    badge.classList.add('visible');
-  } else {
-    badge.classList.remove('visible');
-  }
-}
 </script>
 
 </body>
