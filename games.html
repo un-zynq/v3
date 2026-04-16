@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZYNQ Games - High Performance</title>
+    <title>ZYNQ Games</title>
 
     <script src="https://cdn.jsdelivr.net/gh/un-zynq/zynq-lib@1.1.2/index.min.js"></script>
 
@@ -11,40 +11,60 @@
     :root {
         --accent: #6366f1;
         --bg: #060607;
-        --card-bg: rgba(22, 22, 26, 0.9); /* Geen blur voor performance */
-        --nav: rgba(10, 10, 12, 0.95);
+        --card-bg: #111114;
+        --nav: rgba(10, 10, 12, 0.98);
         --text: #f1f2f8;
-        --muted: #8f94a3;
+        --muted: #64748b;
         --nav-height: 64px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #222;
+        border-radius: 10px;
+        border: 2px solid var(--bg);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+    }
+
+    * { 
+        box-sizing: border-box; 
+        margin: 0; 
+        padding: 0; 
+        -webkit-font-smoothing: antialiased;
+    }
 
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: var(--bg);
         color: var(--text);
         min-height: 100vh;
-        overflow-x: hidden;
     }
 
-    /* Statische achtergrond (GPU accelerated) */
+    /* GPU Optimized Background */
     .bg-fixed {
         position: fixed;
         inset: 0;
         z-index: -2;
         background: url('https://i.ytimg.com/vi/FlzJ5FQXBj8/maxresdefault.jpg') center/cover no-repeat;
-        transform: translateZ(0); /* Forceert GPU rendering */
+        will-change: transform;
     }
 
     .bg-overlay {
         position: fixed;
         inset: 0;
         z-index: -1;
-        background: linear-gradient(to bottom, rgba(6,6,7,0.4), rgba(6,6,7,0.9));
+        background: linear-gradient(180deg, rgba(6,6,7,0.5) 0%, rgba(6,6,7,1) 100%);
     }
 
-    /* Navbar */
+    /* Header & Search */
     .navbar {
         position: fixed;
         top: 0;
@@ -52,88 +72,134 @@
         right: 0;
         height: var(--nav-height);
         background: var(--nav);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         display: flex;
         align-items: center;
-        padding: 0 24px;
+        padding: 0 32px;
         z-index: 1000;
     }
 
     .nav-logo {
-        font-size: 24px;
-        font-weight: 900;
+        font-size: 22px;
+        font-weight: 800;
         letter-spacing: -1px;
-        color: var(--accent);
+        color: #fff;
         text-decoration: none;
-        margin-right: 30px;
+        margin-right: 48px;
     }
 
-    .search-container { flex: 1; max-width: 400px; }
+    .search-wrapper {
+        flex: 1;
+        max-width: 480px;
+        position: relative;
+    }
 
     .search {
         width: 100%;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.04);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 10px 16px;
-        color: white;
+        color: #fff;
+        font-size: 14px;
         outline: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .search:focus { border-color: var(--accent); }
+    .search:focus {
+        border-color: var(--accent);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
 
-    /* Grid & Container */
+    /* Main View */
     .container {
-        max-width: 1400px;
+        max-width: 1440px;
         margin: 0 auto;
-        padding: calc(var(--nav-height) + 30px) 20px 40px;
+        padding: calc(var(--nav-height) + 40px) 32px 60px;
     }
 
     .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 24px;
     }
 
-    /* Card Performance Optimization */
+    /* Game Card */
     .card {
         background: var(--card-bg);
-        border-radius: 12px;
+        border-radius: 14px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.04);
         cursor: pointer;
-        transition: transform 0.2s ease-out;
-        min-height: 230px; /* Voorkomt layout shifts */
-        content-visibility: auto; /* Browser-level virtual rendering */
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease;
+        content-visibility: auto;
     }
 
     .card:hover {
-        transform: translateY(-4px);
+        transform: scale(1.04);
         border-color: var(--accent);
+        z-index: 10;
+    }
+
+    .thumb-box {
+        position: relative;
+        aspect-ratio: 4/3;
+        background: #1a1a1d;
+        overflow: hidden;
     }
 
     .thumb {
-        aspect-ratio: 4/3;
+        width: 100%;
+        height: 100%;
         background-size: cover;
         background-position: center;
-        background-color: #111;
         opacity: 0;
-        transition: opacity 0.3s ease-in;
+        transition: opacity 0.4s ease, transform 0.6s ease;
     }
 
-    .thumb.loaded { opacity: 1; }
+    .thumb.loaded {
+        opacity: 1;
+    }
 
-    .info { padding: 12px; }
+    .card:hover .thumb {
+        transform: scale(1.1);
+    }
+
+    .info {
+        padding: 14px;
+    }
 
     .title {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
+        color: #fff;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+        font-weight: 500;
+    }
+
+    /* Empty state */
+    .empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 80px 0;
+        color: var(--muted);
+        font-size: 15px;
+    }
+
+    @media (max-width: 640px) {
+        .container { padding: calc(var(--nav-height) + 20px) 16px; }
+        .grid { gap: 16px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        .nav-logo { margin-right: 16px; }
+    }
     </style>
 </head>
 
@@ -144,8 +210,8 @@
 
 <nav class="navbar">
     <a href="#" class="nav-logo">ZYNQ</a>
-    <div class="search-container">
-        <input id="search" class="search" placeholder="Zoek een game...">
+    <div class="search-wrapper">
+        <input id="search" class="search" placeholder="Type om te zoeken..." autocomplete="off">
     </div>
 </nav>
 
@@ -157,28 +223,31 @@
 const grid = document.getElementById("grid");
 const searchInput = document.getElementById("search");
 
-// Virtual Rendering Helper: Alleen afbeeldingen laden als ze in beeld komen
+// High-performance image loading
 const imageObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             const thumb = entry.target;
-            thumb.style.backgroundImage = `url('${thumb.dataset.src}')`;
-            thumb.classList.add('loaded');
+            const img = new Image();
+            img.src = thumb.dataset.src;
+            img.onload = () => {
+                thumb.style.backgroundImage = `url('${thumb.dataset.src}')`;
+                thumb.classList.add('loaded');
+            };
             observer.unobserve(thumb);
         }
     });
-}, { rootMargin: '100px' });
+}, { rootMargin: '200px' });
 
 function render() {
-    grid.innerHTML = "";
     const games = ZYNQ.games.list;
+    grid.innerHTML = "";
 
     if (games.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 100px;">Geen games gevonden.</div>`;
+        grid.innerHTML = `<div class="empty">Geen games gevonden voor deze zoekopdracht.</div>`;
         return;
     }
 
-    // Gebruik een DocumentFragment voor snellere DOM-injectie
     const fragment = document.createDocumentFragment();
 
     games.forEach(game => {
@@ -186,10 +255,12 @@ function render() {
         card.className = "card";
         
         card.innerHTML = `
-            <div class="thumb" data-src="${game.thumb}"></div>
+            <div class="thumb-box">
+                <div class="thumb" data-src="${game.thumb}"></div>
+            </div>
             <div class="info">
                 <div class="title">${game.name}</div>
-                <div class="meta">${game.category || "Game"}</div>
+                <div class="meta">${game.category || "Algemeen"}</div>
             </div>
         `;
 
@@ -198,7 +269,6 @@ function render() {
             window.location.href = game.url;
         };
 
-        // Start observer op de thumbnail
         imageObserver.observe(card.querySelector('.thumb'));
         fragment.appendChild(card);
     });
@@ -206,19 +276,25 @@ function render() {
     grid.appendChild(fragment);
 }
 
-// Init
+// Initialization
 (async () => {
     try {
         await ZYNQ.games.init({ mode: "all" });
         render();
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("ZYNQ initialization failed:", e);
+    }
 })();
 
-// Search
+// Debounced search for performance
+let timeout;
 searchInput.addEventListener("input", e => {
-    const q = e.target.value.toLowerCase();
-    q ? ZYNQ.games.search(q) : ZYNQ.games.reset();
-    render();
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        const q = e.target.value.trim();
+        q ? ZYNQ.games.search(q) : ZYNQ.games.reset();
+        render();
+    }, 150);
 });
 </script>
 
