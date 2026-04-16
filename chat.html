@@ -552,7 +552,6 @@
     <!-- SIDEBAR -->
     <div id="sidebar">
         <div class="sidebar-header">
-            <div class="logo">ZYNQ</div>
             <button onclick="openAddModal()" class="add-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -590,8 +589,7 @@
                 <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);"></div>
                 <!-- content -->
                 <div style="position:relative;z-index:1;max-width:420px;width:100%;text-align:center;color:rgba(229,231,235,0.85);">
-                    <div style="font-size:92px;line-height:1;margin-bottom:8px;font-weight:900;letter-spacing:-6px;">ZYNQ</div>
-                    <p style="font-size:19px;margin:0 0 32px;line-height:1.5;color:rgba(209,213,219,0.85);">Chat with your friends on ZYNQ!</p>
+                    <p style="font-size:19px;margin:0 0 32px;line-height:1.5;color:rgba(209,213,219,0.85);">No chat opened.<br>Open a chat or create a new one!</p>
                 </div>
             </div>
             <!-- berichten komen hier (wordt automatisch beheerd) -->
@@ -600,7 +598,7 @@
 
         <div class="input-bar">
             <input id="msgInp" placeholder="Type your message here..." disabled onkeypress="if(event.key==='Enter') send()">
-            <button id="sendBtn" onclick="send()" disabled>SEND</button>
+            <button id="sendBtn" onclick="send()" disabled><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-icon lucide-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button>
         </div>
     </div>
 
