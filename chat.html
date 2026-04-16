@@ -1312,9 +1312,7 @@
     <script>
 (function () {
 
-    let lastState = {
-        unread: -1
-    };
+    let lastUnread = -1;
 
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
@@ -1324,12 +1322,11 @@
         }, 0);
     }
 
-    function emitState() {
+    function emitState(force = false) {
         const unread = getUnreadCount();
 
-        if (unread === lastState.unread) return;
-
-        lastState.unread = unread;
+        if (!force && unread === lastUnread) return;
+        lastUnread = unread;
 
         const payload = {
             type: 'zynq_state',
@@ -1344,7 +1341,7 @@
     }
 
     function trigger() {
-        setTimeout(emitState, 10);
+        setTimeout(() => emitState(), 10);
     }
 
     const r = window.render;
@@ -1371,8 +1368,12 @@
         trigger();
     };
 
+    document.addEventListener('visibilitychange', () => emitState(true));
+    window.addEventListener('focus', () => emitState(true));
+    window.addEventListener('pageshow', () => emitState(true));
+
     window.addEventListener('load', () => {
-        setTimeout(emitState, 200);
+        setTimeout(() => emitState(true), 200);
     });
 
 })();
