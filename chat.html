@@ -1312,30 +1312,29 @@
     <script>
 (function () {
 
-    let isIframeActive = false;
-
-    window.addEventListener("message", (event) => {
-        if (event.data && event.data.type === "zynq_visibility") {
-            isIframeActive = event.data.active;
-            emitState();
-        }
-    });
+    let lastState = {
+        unread: -1
+    };
 
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
-        return Object.values(db.friends).reduce((t, f) => t + (f.unread || 0), 0);
-    }
 
-    function isInChat() {
-        return currentChat !== null && isIframeActive;
+        return Object.values(db.friends).reduce((total, f) => {
+            return total + (f.unread || 0);
+        }, 0);
     }
 
     function emitState() {
+        const unread = getUnreadCount();
+
+        if (unread === lastState.unread) return;
+
+        lastState.unread = unread;
+
         const payload = {
             type: 'zynq_state',
-            hasUnread: getUnreadCount() > 0,
-            unread: getUnreadCount(),
-            inChat: isInChat(),
+            hasUnread: unread > 0,
+            unread: unread,
             timestamp: Date.now()
         };
 
@@ -1344,27 +1343,33 @@
         }
     }
 
-    function hook(fnName) {
-        const original = window[fnName];
-        if (!original) return;
-
-        window[fnName] = function () {
-            const result = original.apply(this, arguments);
-            setTimeout(emitState, 0);
-            return result;
-        };
+    function trigger() {
+        setTimeout(emitState, 10);
     }
 
-    hook('render');
-    hook('renderMessages');
-    hook('send');
-    hook('performDelete');
+    const r = window.render;
+    window.render = function () {
+        if (r) r.apply(this, arguments);
+        trigger();
+    };
 
-    // 🔥 CRUCIAAL: ook triggeren bij inkomende messages
-    const originalPeerMessage = peer?.on;
-    document.addEventListener('DOMContentLoaded', () => {
-        setInterval(emitState, 500);
-    });
+    const rm = window.renderMessages;
+    window.renderMessages = function () {
+        if (rm) rm.apply(this, arguments);
+        trigger();
+    };
+
+    const s = window.send;
+    window.send = function () {
+        if (s) s.apply(this, arguments);
+        trigger();
+    };
+
+    const d = window.performDelete;
+    window.performDelete = function () {
+        if (d) d.apply(this, arguments);
+        trigger();
+    };
 
     window.addEventListener('load', () => {
         setTimeout(emitState, 200);
