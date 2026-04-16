@@ -111,7 +111,7 @@ function render() {
         document.getElementById("featured-link").onclick = (e) => {
             e.preventDefault();
             ZYNQ.games.addToHistory(feat.alias);
-            window.location.href = feat.url;
+            window.location.href = "/" + feat.url;
         };
         heroSection.style.display = "block";
     } else {
@@ -125,7 +125,7 @@ function render() {
         card.innerHTML = `<div class="thumb-box"><div class="thumb" data-src="${game.thumb}"></div></div><div class="info"><div class="title">${game.name}</div><div class="meta">${game.category || "Game"}</div></div>`;
         card.onclick = () => {
             ZYNQ.games.addToHistory(game.alias);
-            window.location.href = game.url;
+            window.location.href = "/" + game.url;
         };
         imageObserver.observe(card.querySelector('.thumb'));
         fragment.appendChild(card);
