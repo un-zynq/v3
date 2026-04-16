@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ZYNQ Sidebar SPA</title>
+<title>ZYNQ v3</title>
 
 <style>
 :root{
@@ -13,6 +13,7 @@
   --panel:#1c1d21;
   --text:#f1f2f8;
   --muted:#8f94a3;
+  --btn-size: 60px;
 }
 
 body{
@@ -22,50 +23,58 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial;
   background:var(--bg);
   color:var(--text);
+  overflow: hidden;
 }
 
 /* SIDEBAR */
 .sidebar{
-  width:60px;
+  width: var(--btn-size);
   background:var(--sidebar);
   display:flex;
   flex-direction:column;
   align-items:center;
   border-right:1px solid rgba(255,255,255,.06);
+  position: relative;
+}
+
+/* DE SLIDING INDICATOR */
+#indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 30px; /* Hoogte van het balkje */
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+  /* De slide animatie */
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 10;
+  /* Verticaal centreren binnen de eerste knop (60px knop - 30px balk = 30px over / 2 = 15px) */
+  margin-top: 15px; 
 }
 
 /* ICONS */
 .icon-btn{
-  width:60px;
-  height:60px;
+  width: var(--btn-size);
+  height: var(--btn-size);
   display:flex;
   align-items:center;
   justify-content:center;
   cursor:pointer;
-  color:var(--text);
-  transition:background .15s ease;
-  position:relative;
+  color: var(--muted);
+  z-index: 5;
+  transition: color 0.2s;
 }
 
 .icon-btn:hover{
-  background:rgba(255,255,255,.06);
+  color: var(--text);
 }
 
 .icon-btn.active{
-  background:rgba(99,102,241,.18);
+  color: var(--accent);
 }
 
-.icon-btn.active::before{
-  content:"";
-  position:absolute;
-  left:0;
-  width:3px;
-  height:60%;
-  background:var(--accent);
-  border-radius:0 4px 4px 0;
-}
-
-/* ICON SIZE */
 .icon-btn svg{
   width:22px;
   height:22px;
@@ -75,25 +84,22 @@ body{
 .content{
   flex:1;
   position:relative;
-  overflow:hidden;
   background:var(--panel);
 }
 
-/* IFRAME SYSTEM */
+/* IFRAME SYSTEM (GEEN FADE) */
 iframe{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   border:0;
-  opacity:0;
-  pointer-events:none;
+  display: none; /* Direct verbergen */
   background:var(--panel);
 }
 
 iframe.active{
-  opacity:1;
-  pointer-events:auto;
+  display: block; /* Direct tonen */
 }
 </style>
 </head>
@@ -101,11 +107,13 @@ iframe.active{
 <body>
 
 <div class="sidebar">
-  <div class="icon-btn active" onclick="sw('home',this)"><i data-lucide="home"></i></div>
-  <div class="icon-btn" onclick="sw('games',this)"><i data-lucide="gamepad-2"></i></div>
-  <div class="icon-btn" onclick="sw('chat',this)"><i data-lucide="message-circle"></i></div>
-  <div class="icon-btn" onclick="sw('links',this)"><i data-lucide="link"></i></div>
-  <div class="icon-btn" onclick="sw('settings',this)"><i data-lucide="settings"></i></div>
+  <div id="indicator"></div>
+
+  <div class="icon-btn active" onclick="sw('home', this, 0)"><i data-lucide="home"></i></div>
+  <div class="icon-btn" onclick="sw('games', this, 1)"><i data-lucide="gamepad-2"></i></div>
+  <div class="icon-btn" onclick="sw('chat', this, 2)"><i data-lucide="message-circle"></i></div>
+  <div class="icon-btn" onclick="sw('links', this, 3)"><i data-lucide="link"></i></div>
+  <div class="icon-btn" onclick="sw('settings', this, 4)"><i data-lucide="settings"></i></div>
 </div>
 
 <div class="content">
@@ -118,18 +126,25 @@ iframe.active{
 
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+// Initialiseer de icoontjes
 lucide.createIcons();
 
-function sw(id,el){
-  document.querySelectorAll("iframe").forEach(f=>{
-    f.classList.toggle("active",f.id===id);
+function sw(id, el, index){
+  // 1. Switch de Iframes (direct via display block/none)
+  document.querySelectorAll("iframe").forEach(f => {
+    f.classList.toggle("active", f.id === id);
   });
 
-  document.querySelectorAll(".icon-btn").forEach(b=>{
+  // 2. Update de actieve kleur van de iconen
+  document.querySelectorAll(".icon-btn").forEach(b => {
     b.classList.remove("active");
   });
-
   el.classList.add("active");
+
+  // 3. Slide de indicator naar de juiste positie
+  // We vermenigvuldigen de index met de knop-hoogte (60px)
+  const indicator = document.getElementById('indicator');
+  indicator.style.transform = `translateY(${index * 60}px)`;
 }
 </script>
 
