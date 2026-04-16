@@ -27,96 +27,112 @@ body{
   overflow:hidden;
 }
 
-/* background */
+/* background setup */
 .bg{
   position:absolute;
   inset:0;
   overflow:hidden;
+  /* De gevraagde afbeelding */
+  background-image: url('https://i.ytimg.com/vi/FlzJ5FQXBj8/maxresdefault.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* grid pattern */
+/* Overlay voor leesbaarheid en effecten */
 .bg::before{
   content:"";
   position:absolute;
   inset:0;
+  /* Donkere overlay zodat tekst goed leesbaar blijft */
+  background: rgba(6, 6, 7, 0.4); 
+  /* Subtiel rasterpatroon */
   background-image:
-    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size:40px 40px;
 }
 
-/* vignette (dark edges) */
+/* Vignette (donkere randen) */
 .bg::after{
   content:"";
   position:absolute;
   inset:0;
-  background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.6));
+  background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.7));
 }
 
-/* glow blobs */
+/* Glow blobs die over de afbeelding zweven */
 .blob{
   position:absolute;
-  width:420px;
-  height:420px;
+  width:500px;
+  height:500px;
   background:var(--accent);
-  filter:blur(140px);
-  opacity:.15;
+  filter:blur(150px);
+  opacity:.12; /* Iets lager gezet zodat de bg zichtbaar blijft */
   border-radius:50%;
   animation:float 14s ease-in-out infinite;
+  z-index: 1;
 }
 
-.b1{top:-120px;left:-120px}
+.b1{top:-150px; left:-100px}
 .b2{
-  bottom:-160px;
-  right:-140px;
+  bottom:-200px;
+  right:-150px;
   background:#a5b4fc;
   animation-delay:5s;
 }
 
 @keyframes float{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(25px)}
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(30px) scale(1.1)}
 }
 
-/* main */
+/* main content */
 .wrap{
   position:relative;
   text-align:center;
   max-width:520px;
   padding:40px;
+  z-index: 10; /* Zorg dat tekst boven de blobs staat */
 }
 
 /* logo */
 .logo{
-  font-size:72px;
+  font-size:82px;
   font-weight:900;
   letter-spacing:-4px;
   background:linear-gradient(90deg,var(--accent),#a5b4fc);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   margin:0;
+  filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
 }
 
 /* subtitle */
 .sub{
-  color:var(--muted);
-  font-size:16px;
-  margin-top:12px;
+  color:var(--text);
+  font-size:18px;
+  margin-top:10px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
 /* footer pill */
 .pill{
   position:fixed;
-  bottom:20px;
+  bottom:24px;
   left:50%;
   transform:translateX(-50%);
-  padding:10px 14px;
+  padding:10px 18px;
   border-radius:999px;
-  background:#0a0a0b;
-  border:1px solid rgba(99,102,241,.25);
+  background:rgba(10, 10, 11, 0.8);
+  border:1px solid rgba(99,102,241,.3);
   color:var(--accent);
   font-size:12px;
   font-family:monospace;
+  backdrop-filter: blur(5px);
+  z-index: 10;
 }
 </style>
 </head>
@@ -129,7 +145,7 @@ body{
 </div>
 
 <div class="wrap">
-  <div class="logo">ZYNQ</div>
+  <h1 class="logo">ZYNQ</h1>
   <div class="sub">Play. Chat. Connect.</div>
 </div>
 
