@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sidebar Iframe SPA</title>
+
+<style>
+body{margin:0;height:100vh;display:flex;font-family:Arial;background:#000}
+.sidebar{width:60px;background:#1e1e2f;display:flex;flex-direction:column;align-items:center}
+.icon-btn{width:60px;height:60px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+.icon-btn.active{background:#3a3a5a}
+.content{flex:1;position:relative;overflow:hidden;background:#000}
+
+/* no fade, no animation */
+iframe{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  opacity:0;
+  pointer-events:none;
+  background:#000;
+}
+iframe.active{
+  opacity:1;
+  pointer-events:auto;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="icon-btn active" onclick="sw('home',this)"><i data-lucide="home"></i></div>
+  <div class="icon-btn" onclick="sw('games',this)"><i data-lucide="gamepad-2"></i></div>
+  <div class="icon-btn" onclick="sw('chat',this)"><i data-lucide="message-circle"></i></div>
+  <div class="icon-btn" onclick="sw('links',this)"><i data-lucide="link"></i></div>
+  <div class="icon-btn" onclick="sw('settings',this)"><i data-lucide="settings"></i></div>
+</div>
+
+<div class="content">
+  <iframe id="home" class="active" src="home.html"></iframe>
+  <iframe id="games" src="games.html"></iframe>
+  <iframe id="chat" src="chat.html"></iframe>
+  <iframe id="links" src="links.html"></iframe>
+  <iframe id="settings" src="settings.html"></iframe>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+lucide.createIcons();
+
+function sw(id,el){
+  document.querySelectorAll("iframe").forEach(f=>{
+    f.classList.toggle("active",f.id===id);
+  });
+
+  document.querySelectorAll(".icon-btn").forEach(b=>{
+    b.classList.remove("active");
+  });
+
+  el.classList.add("active");
+}
+</script>
+
+</body>
+</html>
