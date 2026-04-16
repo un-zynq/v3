@@ -1312,35 +1312,23 @@
     <script>
 (function () {
 
-    let lastUnread = -1;
-    let lastConvoOpened = false;
-
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
 
-        return Object.values(db.friends).reduce((total, f) => {
-            return total + (f.unread || 0);
+        return Object.values(db.friends).reduce((t, f) => {
+            return t + (f.unread || 0);
         }, 0);
     }
 
-    function isConvoOpened() {
-        return typeof currentChat !== 'undefined' && currentChat !== null;
-    }
-
-    function emitState(force = false) {
+    function emit(force = false) {
         const unread = getUnreadCount();
-        const convoOpened = isConvoOpened();
-
-        if (!force && unread === lastUnread && convoOpened === lastConvoOpened) return;
-
-        lastUnread = unread;
-        lastConvoOpened = convoOpened;
 
         const payload = {
             type: 'zynq_state',
             hasUnread: unread > 0,
             unread: unread,
-            convoOpened: convoOpened,
+            inFocus: document.visibilityState === 'visible',
+            inConvo: !!currentChat,
             timestamp: Date.now()
         };
 
@@ -1349,41 +1337,40 @@
         }
     }
 
-    function trigger() {
-        setTimeout(() => emitState(), 10);
+    function forceOutOfConvo() {
+        const payload = {
+            type: 'zynq_state',
+            hasUnread: getUnreadCount() > 0,
+            unread: getUnreadCount(),
+            inFocus: false,
+            inConvo: false,
+            timestamp: Date.now()
+        };
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage(payload, '*');
+        }
     }
 
-    const r = window.render;
-    window.render = function () {
-        if (r) r.apply(this, arguments);
-        trigger();
-    };
-
-    const rm = window.renderMessages;
-    window.renderMessages = function () {
-        if (rm) rm.apply(this, arguments);
-        trigger();
-    };
-
-    const s = window.send;
-    window.send = function () {
-        if (s) s.apply(this, arguments);
-        trigger();
-    };
-
-    const d = window.performDelete;
-    window.performDelete = function () {
-        if (d) d.apply(this, arguments);
-        trigger();
-    };
-
-    window.addEventListener('load', () => {
-        setTimeout(() => emitState(true), 200);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            forceOutOfConvo();
+        } else {
+            setTimeout(() => emit(true), 100);
+        }
     });
 
-    document.addEventListener('visibilitychange', () => emitState(true));
-    window.addEventListener('focus', () => emitState(true));
-    window.addEventListener('pageshow', () => emitState(true));
+    window.addEventListener('blur', () => {
+        forceOutOfConvo();
+    });
+
+    window.addEventListener('focus', () => {
+        setTimeout(() => emit(true), 100);
+    });
+
+    window.addEventListener('pageshow', () => {
+        emit(true);
+    });
 
 })();
 </script>
