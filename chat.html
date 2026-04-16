@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,7 +65,7 @@
     </div>
     <!-- OVERLAYS -->
     <div id="overlay" onclick="toggleMenu()"></div>
-  
+ 
     <!-- add friend modal -->
     <div id="friendModal" class="modal">
         <div class="modal-content">
@@ -98,9 +97,9 @@
     <!-- klein help menu -->
     <div id="helpModal" class="modal">
         <div class="modal-content" style="max-width:420px; padding: 20px; position:relative;">
-    
+   
             <h2 style="margin-top:0; text-align:center;">ZYNQ Tutorial</h2>
-    
+   
             <!-- Video -->
             <div style="margin-top:16px; width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden; background:black;">
                 <video
@@ -111,7 +110,7 @@
                     allowfullscreen>
                 </video>
             </div>
-    
+   
             <!-- Close button -->
             <button onclick="closeHelpModal()"
                 style="
@@ -127,15 +126,14 @@
                 ">
                 Close
             </button>
-    
+   
         </div>
     </div>
-    
+   
     <div id="contextMenu">
         <div onclick="editCurrentFriend()">Edit name</div>
         <div onclick="deleteCurrentFriend()">Delete friend</div>
     </div>
-
     <script>
         let peer, currentChat;
         let onlineStatus = {};
@@ -156,17 +154,20 @@
         let currentRenderedChat = null;
         let chatInitialized = false;
         let selectedFriendId = null;
-        const KEEPALIVE_INTERVAL = 12000;
-        const STATUS_CHECK_INTERVAL = 6000;
-        const OFFLINE_TIMEOUT = 20000;
-        const MAX_DELIVERY_ATTEMPTS = 25;
+        
+        // === AANGEPASTE 24/7 SETTINGS BRO ===
+        // Heartbeats + reconnect NON-STOP, ook als tab slaapt/backgrounded/throttled
+        const KEEPALIVE_INTERVAL = 6500;      // hartslag elke ~6.5s (super continu)
+        const STATUS_CHECK_INTERVAL = 3200;   // check status elke ~3s
+        const OFFLINE_TIMEOUT = 75000;        // 75 seconden voordat iemand offline gaat → veel toleranter voor slaap-tab
+        const MAX_DELIVERY_ATTEMPTS = 60;     // meer pogingen om berichten te sturen
+        const EXTRA_RECONNECT_INTERVAL = 9500; // extra 24/7 force reconnect loop (ook bij throttling)
 
         function generateMsgId() {
             return 'msg-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10);
         }
-
         function safeSend(to, payload) {
-            if (!isActiveTab || !peer || !onlineStatus[to]) return false;
+            if (!peer || !onlineStatus[to]) return false;
             try {
                 peer.send(to, payload);
                 return true;
@@ -175,7 +176,6 @@
                 return false;
             }
         }
-
         function markAsOffline(id) {
             let changed = false;
             if (onlineStatus[id] !== false) {
@@ -196,9 +196,8 @@
                 render();
             }
         }
-
         function flushPending(id) {
-            if (!isActiveTab || !peer || !onlineStatus[id] || !db.pending[id] || db.pending[id].length === 0) return;
+            if (!peer || !onlineStatus[id] || !db.pending[id] || db.pending[id].length === 0) return;
             const queue = db.pending[id];
             let changed = false;
             for (let i = 0; i < queue.length; i++) {
@@ -211,12 +210,10 @@
             }
             if (changed) save();
         }
-
         function setAsActiveTab() {
             tabTimestamp = Date.now();
             localStorage.setItem(ACTIVE_KEY, JSON.stringify({ timestamp: tabTimestamp }));
         }
-
         function checkIfStillActive() {
             const stored = localStorage.getItem(ACTIVE_KEY);
             if (!stored) return true;
@@ -228,7 +225,6 @@
             }
             return true;
         }
-
         function sleepPeer() {
             if (peer) {
                 try { peer.destroy ? peer.destroy() : peer.close ? peer.close() : peer.disconnect && peer.disconnect(); } catch(e){}
@@ -245,16 +241,14 @@
             reconnectTimers = {};
             showInactiveOverlay();
         }
-
         function showInactiveOverlay() {
             const overlay = document.getElementById('inactiveOverlay');
             if (overlay) overlay.style.display = 'flex';
         }
-
         function startKeepAlive() {
             if (keepaliveInterval) clearInterval(keepaliveInterval);
             keepaliveInterval = setInterval(() => {
-                if (!isActiveTab || !peer) return;
+                if (!peer) return;
                 Object.keys(db.friends).forEach(id => {
                     if (onlineStatus[id]) {
                         safeSend(id, { type: 'keepalive', ts: Date.now() });
@@ -262,11 +256,10 @@
                 });
             }, KEEPALIVE_INTERVAL);
         }
-
         function startStatusChecker() {
             if (statusCheckerInterval) clearInterval(statusCheckerInterval);
             statusCheckerInterval = setInterval(() => {
-                if (!isActiveTab || !peer) return;
+                if (!peer) return;
                 const now = Date.now();
                 Object.keys(db.friends).forEach(id => {
                     if (onlineStatus[id] && lastSeen[id] && (now - lastSeen[id] > OFFLINE_TIMEOUT)) {
@@ -276,34 +269,31 @@
                 });
             }, STATUS_CHECK_INTERVAL);
         }
-
         function startRetryInterval() {
             if (retryInterval) clearInterval(retryInterval);
             retryInterval = setInterval(() => {
-                if (!isActiveTab || !peer) return;
+                if (!peer) return;
                 Object.keys(db.pending || {}).forEach(fid => {
                     if (onlineStatus[fid]) flushPending(fid);
                 });
-            }, 4500);
+            }, 3800);
         }
-
         function scheduleReconnect(id) {
             if (reconnectTimers[id]) clearTimeout(reconnectTimers[id]);
             const attempts = reconnectAttempts[id] || 0;
-            const delay = Math.min(1500 * Math.pow(1.75, attempts), 40000);
+            // snellere reconnect curve voor 24/7
+            const delay = Math.min(900 * Math.pow(1.55, attempts), 28000);
             reconnectTimers[id] = setTimeout(() => {
                 delete reconnectTimers[id];
-                if (!isActiveTab || !peer || onlineStatus[id] || !db.friends[id]) return;
+                if (!peer || onlineStatus[id] || !db.friends[id]) return;
                 reconnectAttempts[id] = attempts + 1;
                 try { peer.connect(id); } catch(e) { scheduleReconnect(id); }
             }, delay);
         }
-
         function resetReconnectState(id) {
             reconnectAttempts[id] = 0;
             if (reconnectTimers[id]) { clearTimeout(reconnectTimers[id]); delete reconnectTimers[id]; }
         }
-
         function updateLastSeen(id) {
             lastSeen[id] = Date.now();
             if (!onlineStatus[id]) {
@@ -313,9 +303,7 @@
                 render();
             }
         }
-
         function handleTyping(from, status) {
-            if (!isActiveTab) return;
             if (status) {
                 if (typingIndicators[from]) clearTimeout(typingIndicators[from]);
                 typingIndicators[from] = setTimeout(() => { delete typingIndicators[from]; if (currentChat === from) renderMessages(); }, 4500);
@@ -325,27 +313,26 @@
                 if (currentChat === from) renderMessages();
             }
         }
-
         function setupTypingListener() {
             const inp = document.getElementById('msgInp');
             if (!inp) return;
             inp.addEventListener('input', () => {
-                if (!currentChat || !onlineStatus[currentChat] || !peer || !isActiveTab) return;
+                if (!currentChat || !onlineStatus[currentChat] || !peer) return;
                 safeSend(currentChat, { type: 'typing', status: true });
                 clearTimeout(inputTypingTimeout);
                 inputTypingTimeout = setTimeout(() => {
-                    if (peer && currentChat && isActiveTab) safeSend(currentChat, { type: 'typing', status: false });
+                    if (peer && currentChat) safeSend(currentChat, { type: 'typing', status: false });
                 }, 2800);
             });
         }
-
         function checkAllStatuses() {
-            if (!isActiveTab || !peer) return;
+            if (!peer) return;
             Object.keys(db.friends).forEach(id => {
-                if (!onlineStatus[id]) try { peer.connect(id); } catch(e){}
+                if (!onlineStatus[id]) {
+                    try { peer.connect(id); } catch(e){}
+                }
             });
         }
-
         function showHomeScreen() {
             const home = document.getElementById('homeScreen');
             const wrapper = document.getElementById('messagesWrapper');
@@ -356,7 +343,6 @@
             if (chatMessagesDiv && chatMessagesDiv.parentNode) chatMessagesDiv.parentNode.removeChild(chatMessagesDiv);
             chatMessagesDiv = null;
         }
-
         function renderMessages() {
             const home = document.getElementById('homeScreen');
             const wrapper = document.getElementById('messagesWrapper');
@@ -415,28 +401,23 @@
             }
             chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
         }
-
         function formatTime(timestamp) {
             if (!timestamp) return '';
             const date = new Date(timestamp);
             return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
         }
-
         window.onload = () => {
             setAsActiveTab();
             checkIfStillActive();
             init();
         };
-
         function init() {
-            if (!isActiveTab) return;
             if (!db.pending) db.pending = {};
             if (!db.user.id) {
                 db.user.id = 'ZNQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
                 save();
             }
             document.getElementById('myId').textContent = db.user.id;
-
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && currentChat !== null) {
                     currentChat = null;
@@ -445,33 +426,45 @@
                     render();
                 }
             });
-
             peer = new ZYNQ.Peer({
                 id: db.user.id,
                 txt: true,
                 video: false,
                 audio: false
             });
-
             peer.on('ready', (id) => {
                 document.getElementById('myId').textContent = id;
                 let retries = 0;
                 const retryIntervalCheck = setInterval(() => {
-                    if (!isActiveTab || retries >= 12) {
+                    if (retries >= 15) {
                         clearInterval(retryIntervalCheck);
-                        setInterval(() => { if (isActiveTab) checkAllStatuses(); }, 8000);
+                        setInterval(() => { if (peer) checkAllStatuses(); }, 9000);
                         return;
                     }
                     retries++;
                     checkAllStatuses();
-                }, 900);
+                }, 850);
                 checkAllStatuses();
                 startKeepAlive();
                 startStatusChecker();
                 startRetryInterval();
+
+                // === 24/7 ULTRA CONTINUOUS RECONNECT + HEARTBEAT LOOP ===
+                // Dit loopt voor altijd, ook als de tab slaapt/backgrounded/throttled wordt
+                setInterval(() => {
+                    if (!peer) return;
+                    Object.keys(db.friends).forEach(id => {
+                        if (!onlineStatus[id]) {
+                            try { peer.connect(id); } catch(e) {}
+                        } else {
+                            // force extra heartbeat
+                            safeSend(id, { type: 'keepalive', ts: Date.now() });
+                        }
+                    });
+                }, EXTRA_RECONNECT_INTERVAL);
+
                 Object.keys(db.pending).forEach(fid => { if (onlineStatus[fid]) flushPending(fid); });
             });
-
             peer.on('message', (payload) => {
                 const data = payload.data;
                 const from = payload.from;
@@ -512,39 +505,36 @@
                     safeSend(from, { type: 'keepalive', ts: Date.now() });
                 }
             });
-
             peer.on('open', (id) => {
-                if (isActiveTab) {
-                    onlineStatus[id] = true;
-                    updateLastSeen(id);
-                    flushPending(id);
-                    updateUIState();
-                    render();
-                }
+                onlineStatus[id] = true;
+                updateLastSeen(id);
+                flushPending(id);
+                updateUIState();
+                render();
             });
-
             peer.on('close', ({id}) => {
-                if (isActiveTab) {
-                    markAsOffline(id);
-                    if (db.friends[id]) scheduleReconnect(id);
-                }
+                markAsOffline(id);
+                if (db.friends[id]) scheduleReconnect(id);
             });
-
             peer.on('error', () => {});
 
+            // extra triggers voor reconnect bij netwerk/tab events
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible' && isActiveTab) checkAllStatuses();
-            });
-
-            window.addEventListener('online', () => {
-                if (isActiveTab && Date.now() - lastNetworkCheck > 3000) {
-                    lastNetworkCheck = Date.now();
+                if (document.visibilityState === 'visible' && peer) {
                     checkAllStatuses();
+                    // force hartslag als tab weer wakker wordt
+                    Object.keys(db.friends).forEach(id => {
+                        if (onlineStatus[id]) safeSend(id, { type: 'keepalive', ts: Date.now() });
+                    });
                 }
             });
-
+            window.addEventListener('online', () => {
+                if (Date.now() - lastNetworkCheck > 2000) {
+                    lastNetworkCheck = Date.now();
+                    if (peer) checkAllStatuses();
+                }
+            });
             window.addEventListener('storage', (e) => {
-                if (!isActiveTab) return;
                 if (e.key === ACTIVE_KEY && e.newValue) {
                     try {
                         const data = JSON.parse(e.newValue);
@@ -555,21 +545,17 @@
                     } catch(e) {}
                 }
             });
-
             document.getElementById('menuBtn').addEventListener('click', toggleMenu);
             setupTypingListener();
             document.addEventListener('click', (e) => {
                 const menu = document.getElementById('contextMenu');
                 if (menu && menu.style.display === 'block' && !menu.contains(e.target)) closeContextMenu();
             });
-
             render();
             updateUIState();
             showHomeScreen();
         }
-
         function updateUIState() {
-            if (!isActiveTab) return;
             const inpBar = document.querySelector('.input-bar');
             const title = document.getElementById('chatTitle');
             const indicator = document.getElementById('onlineIndicator');
@@ -593,7 +579,6 @@
             }
             inpBar.style.display = 'flex';
         }
-
         function openAddModal() {
             document.getElementById('modalTitle').textContent = "Add Friend";
             document.getElementById('fId').value = "";
@@ -601,7 +586,6 @@
             document.getElementById('fAlias').value = "";
             document.getElementById('friendModal').style.display = 'flex';
         }
-
         function openEditModal(e, id) {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             document.getElementById('modalTitle').textContent = "Edit Name";
@@ -610,25 +594,21 @@
             document.getElementById('fAlias').value = db.friends[id].alias;
             document.getElementById('friendModal').style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('friendModal').style.display = 'none'; }
-
         function saveFriend() {
             const id = document.getElementById('fId').value.trim().toUpperCase();
             let alias = document.getElementById('fAlias').value.trim() || generateRandomName();
             if (id) {
                 if (!db.friends[id]) db.friends[id] = { alias: alias, msgs: [], unread: 0 };
                 else db.friends[id].alias = alias;
-                if (isActiveTab && peer) peer.connect(id);
+                if (peer) peer.connect(id);
                 save();
                 render();
                 closeModal();
                 if (id === currentChat) updateUIState();
             }
         }
-
         function send() {
-            if (!isActiveTab) return;
             const inp = document.getElementById('msgInp');
             const text = inp.value.trim();
             if (!text || !currentChat || !peer) return;
@@ -650,13 +630,11 @@
             }
             if (inputTypingTimeout) {
                 clearTimeout(inputTypingTimeout);
-                if (peer && currentChat && isActiveTab) safeSend(currentChat, { type: 'typing', status: false });
+                if (peer && currentChat) safeSend(currentChat, { type: 'typing', status: false });
                 inputTypingTimeout = null;
             }
         }
-
         function render() {
-            if (!isActiveTab) return;
             const fList = document.getElementById('friendsList');
             fList.innerHTML = '';
             Object.keys(db.friends).forEach(id => {
@@ -705,15 +683,12 @@
                 fList.innerHTML = `<div style="padding: 40px 20px; text-align:center; color:var(--text-muted); font-size:14px;">No friends added yet.<br>Click the + to add someone.</div>`;
             }
         }
-
         function generateRandomName() {
             return "User" + Math.floor(1000 + Math.random() * 8999);
         }
-
         function save() {
             localStorage.setItem('zynq_chat_v1', JSON.stringify(db));
         }
-
         function copyId() {
             navigator.clipboard.writeText(db.user.id).then(() => {
                 const original = document.getElementById('myId').textContent;
@@ -721,7 +696,6 @@
                 setTimeout(() => document.getElementById('myId').textContent = original, 1200);
             });
         }
-
         function toggleMenu() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -735,7 +709,6 @@
                 setTimeout(() => { overlay.style.display = 'none'; overlay.style.pointerEvents = 'none'; }, 400);
             }
         }
-
         function showContextMenu(e, id) {
             e.stopPropagation(); selectedFriendId = id;
             const menu = document.getElementById('contextMenu');
@@ -746,13 +719,11 @@
             if (leftPos + 170 > window.innerWidth) leftPos = window.innerWidth - 180;
             menu.style.top = `${topPos}px`; menu.style.left = `${leftPos}px`;
         }
-
         function closeContextMenu() {
             const menu = document.getElementById('contextMenu');
             menu.style.display = 'none';
             selectedFriendId = null;
         }
-
         function editCurrentFriend() {
             if (selectedFriendId) {
                 const id = selectedFriendId;
@@ -760,7 +731,6 @@
                 openEditModal(null, id);
             }
         }
-
         function deleteCurrentFriend() {
             if (selectedFriendId) {
                 const id = selectedFriendId;
@@ -769,13 +739,11 @@
                 if (friend && confirm(`Delete ${friend.alias} and all messages?\n\nThis cannot be undone.`)) performDelete(id);
             }
         }
-
         function longPressDelete(id) {
             const friend = db.friends[id];
             if (!friend) return;
             if (confirm(`Delete ${friend.alias} and all messages?\n\nThis cannot be undone.`)) performDelete(id);
         }
-
         function performDelete(id) {
             if (currentChat === id) {
                 currentChat = null;
@@ -786,15 +754,13 @@
             if (onlineStatus[id] !== undefined) delete onlineStatus[id];
             if (lastSeen[id] !== undefined) delete lastSeen[id];
             if (db.pending && db.pending[id] !== undefined) delete db.pending[id];
-            if (peer && isActiveTab) { try { peer.disconnect ? peer.disconnect(id) : peer.close && peer.close(id); } catch(e){} }
+            if (peer) { try { peer.disconnect ? peer.disconnect(id) : peer.close && peer.close(id); } catch(e){} }
             save();
             render();
         }
-
         function showHelpModal() {
             document.getElementById('helpModal').style.display = 'flex';
         }
-
         function closeHelpModal() {
             document.getElementById('helpModal').style.display = 'none';
         }
