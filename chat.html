@@ -1310,68 +1310,31 @@
 
     </script>
     <script>
-(function () {
+(function(){
+function getUnread(){
+return Object.values(db.friends||{}).reduce((a,f)=>a+(f.unread||0),0)
+}
 
-    function getUnreadCount() {
-        if (!db || !db.friends) return 0;
-        return Object.values(db.friends).reduce((t, f) => t + (f.unread || 0), 0);
-    }
+function emit(){
+const state={
+type:'zynq_state',
+hasUnread:getUnread()>0,
+unread:getUnread(),
+timestamp:Date.now()
+}
 
-    function isChatOpen() {
-        return typeof currentChat !== 'undefined' && currentChat !== null;
-    }
+if(window.parent && window.parent!==window){
+window.parent.postMessage(state,'*')
+}
+}
 
-    function emit() {
-        const payload = {
-            type: 'zynq_state',
-            hasUnread: getUnreadCount() > 0,
-            unread: getUnreadCount(),
-            chatOpen: isChatOpen(),
-            timestamp: Date.now()
-        };
+const r=window.render;window.render=function(){r&&r.apply(this,arguments);setTimeout(emit,10)}
+const m=window.renderMessages;window.renderMessages=function(){m&&m.apply(this,arguments);setTimeout(emit,10)}
+const s=window.send;window.send=function(){s&&s.apply(this,arguments);setTimeout(emit,10)}
 
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage(payload, '*');
-        }
-    }
-
-    function trigger() {
-        setTimeout(emit, 10);
-    }
-
-    const r = window.render;
-    window.render = function () {
-        if (r) r.apply(this, arguments);
-        trigger();
-    };
-
-    const rm = window.renderMessages;
-    window.renderMessages = function () {
-        if (rm) rm.apply(this, arguments);
-        trigger();
-    };
-
-    const s = window.send;
-    window.send = function () {
-        if (s) s.apply(this, arguments);
-        trigger();
-    };
-
-    const d = window.performDelete;
-    window.performDelete = function () {
-        if (d) d.apply(this, arguments);
-        trigger();
-    };
-
-    document.addEventListener('visibilitychange', trigger);
-    window.addEventListener('focus', trigger);
-    window.addEventListener('pageshow', trigger);
-
-    window.addEventListener('load', () => {
-        setTimeout(trigger, 200);
-    });
-
-})();
+window.addEventListener('load',()=>setTimeout(emit,200))
+document.addEventListener('visibilitychange',emit)
+})()
 </script>
 </body>
 </html>
