@@ -1308,12 +1308,12 @@
         }
 
 
-// === UNREAD + CHAT STATE → PARENT ===
+// === CHAT STATE → PARENT (ALWAYS SEND REAL STATE) ===
 (function () {
 
     let lastState = {
-        unread: 0,
-        inChat: false
+        unread: -1,
+        inChat: null
     };
 
     function getUnreadCount() {
@@ -1332,7 +1332,6 @@
         const unread = getUnreadCount();
         const inChat = isInChat();
 
-        // alleen sturen als iets veranderd is
         if (unread === lastState.unread && inChat === lastState.inChat) return;
 
         lastState = { unread, inChat };
@@ -1350,33 +1349,33 @@
         }
     }
 
-    function triggerCheck() {
-        setTimeout(emitState, 20);
+    function trigger() {
+        setTimeout(emitState, 10);
     }
 
-    // === HOOKS ===
-    const origRender = window.render;
+    // hooks
+    const r = window.render;
     window.render = function () {
-        if (origRender) origRender.apply(this, arguments);
-        triggerCheck();
+        if (r) r.apply(this, arguments);
+        trigger();
     };
 
-    const origRenderMessages = window.renderMessages;
+    const rm = window.renderMessages;
     window.renderMessages = function () {
-        if (origRenderMessages) origRenderMessages.apply(this, arguments);
-        triggerCheck();
+        if (rm) rm.apply(this, arguments);
+        trigger();
     };
 
-    const origSend = window.send;
+    const s = window.send;
     window.send = function () {
-        if (origSend) origSend.apply(this, arguments);
-        triggerCheck();
+        if (s) s.apply(this, arguments);
+        trigger();
     };
 
-    const origDelete = window.performDelete;
+    const d = window.performDelete;
     window.performDelete = function (id) {
-        if (origDelete) origDelete.apply(this, arguments);
-        triggerCheck();
+        if (d) d.apply(this, arguments);
+        trigger();
     };
 
     window.addEventListener('load', () => {
