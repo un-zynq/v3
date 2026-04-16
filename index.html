@@ -15,7 +15,6 @@
             --btn-size: 60px;
             --notification: #22c55e;
         }
-        
         body {
             margin: 0;
             height: 100vh;
@@ -25,7 +24,6 @@
             color: var(--text);
             overflow: hidden;
         }
-        
         .sidebar {
             width: var(--btn-size);
             background: var(--sidebar);
@@ -35,7 +33,6 @@
             border-right: 1px solid rgba(255,255,255,.06);
             position: relative;
         }
-        
         #indicator {
             position: absolute;
             left: 0;
@@ -49,7 +46,6 @@
             z-index: 10;
             margin-top: 15px;
         }
-        
         .icon-btn {
             width: var(--btn-size);
             height: var(--btn-size);
@@ -60,11 +56,9 @@
             color: var(--muted);
             position: relative;
         }
-        
         .icon-btn.active {
             color: var(--accent);
         }
-        
         .badge {
             position: absolute;
             top: 18px;
@@ -76,17 +70,14 @@
             border: 2px solid var(--sidebar);
             display: none;
         }
-        
         .badge.visible {
             display: block;
         }
-        
         .content {
             flex: 1;
             position: relative;
             background: var(--panel);
         }
-        
         iframe {
             position: absolute;
             inset: 0;
@@ -96,7 +87,6 @@
             display: none;
             background: var(--panel);
         }
-        
         iframe.active {
             display: block;
         }
@@ -105,7 +95,6 @@
 <body>
     <div class="sidebar">
         <div id="indicator"></div>
-        
         <div class="icon-btn active" onclick="sw('home',this,0)">
             <i data-lucide="home"></i>
         </div>
@@ -123,7 +112,6 @@
             <i data-lucide="settings"></i>
         </div>
     </div>
-    
     <div class="content">
         <iframe id="home" class="active" src="home.html"></iframe>
         <iframe id="games" src="games.html"></iframe>
@@ -135,63 +123,82 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         let activeTab = "home";
-        const b = document.getElementById("chat-badge");
-        
-        function setBadge(v) {
-            b.classList.toggle("visible", v);
-            localStorage.setItem("zynq_unread", v ? "1" : "0");
+        const badgeElement = document.getElementById("chat-badge");
+
+        function setBadge(visible) {
+            badgeElement.classList.toggle("visible", visible);
+            localStorage.setItem("zynq_unread", visible ? "1" : "0");
         }
-        
-        // Herstel badge uit localStorage
-        if (localStorage.getItem("zynq_unread") === "1") setBadge(true);
-        
-        function sw(id, el, i) {
-            activeTab = id;
-            
-            // Activeer juiste iframe
-            document.querySelectorAll("iframe").forEach(f => 
-                f.classList.toggle("active", f.id === id)
-            );
-            
-            // Activeer juiste knop
-            document.querySelectorAll(".icon-btn").forEach(b => 
-                b.classList.remove("active")
-            );
-            el.classList.add("active");
-            
-            // Verplaats indicator
-            document.getElementById("indicator").style.transform = `translateY(${i * 60}px)`;
-            
-            // Badge reset alleen als we naar chat gaan
-            if (id === 'chat') setBadge(false);
+
+        // Herstel badge uit localStorage bij start
+        if (localStorage.getItem("zynq_unread") === "1") {
+            setBadge(true);
         }
-        
-        // Luister naar berichten van chat iframe
-        window.addEventListener("message", e => {
-            const d = e.data;
-            if (!d || typeof d !== "object") return;
-            
-            if (d.type === "zynq_state") {
+
+        function sw(tabId, clickedElement, indicatorIndex) {
+            activeTab = tabId;
+
+            // Activeer de juiste iframe
+            document.querySelectorAll("iframe").forEach(frame => {
+                frame.classList.toggle("active", frame.id === tabId);
+            });
+
+            // Activeer de juiste knop in de sidebar
+            document.querySelectorAll(".icon-btn").forEach(btn => {
+                btn.classList.remove("active");
+            });
+            clickedElement.classList.add("active");
+
+            // Verplaats de indicator
+            document.getElementById("indicator").style.transform = `translateY(${indicatorIndex * 60}px)`;
+
+            // Stuur altijd de tab-status naar de chat iframe (ook als we switchen weg van chat)
+            const chatIframe = document.getElementById("chat");
+            if (chatIframe && chatIframe.contentWindow) {
+                const isChatActive = (tabId === "chat");
+                chatIframe.contentWindow.postMessage({
+                    type: "zynq_tab_status",
+                    active: isChatActive
+                }, "*");
+            }
+
+            // Badge reset alleen als we naar de chat tab gaan
+            if (tabId === "chat") {
+                setBadge(false);
+            }
+        }
+
+        // Luister naar berichten van de chat iframe
+        window.addEventListener("message", function (event) {
+            const data = event.data;
+            if (!data || typeof data !== "object") {
+                return;
+            }
+
+            if (data.type === "zynq_state") {
+                // Badge logica blijft hetzelfde (parent toont badge als er unread is)
                 if (activeTab !== "chat") {
-                    setBadge(!!d.hasUnread);
-                } else if (!d.hasUnread) {
+                    setBadge(!!data.hasUnread);
+                } else if (!data.hasUnread) {
                     setBadge(false);
                 }
             }
-            
-            if (d.type === "zynq_message") {
-                if (d.subType === "received" && activeTab !== "chat") {
+
+            if (data.type === "zynq_message") {
+                if (data.subType === "received" && activeTab !== "chat") {
                     setBadge(true);
                 }
-                if (d.subType === "read") {
+                if (data.subType === "read") {
                     setBadge(false);
                 }
             }
         });
-        
+
         // Lucide icons initialiseren
-        window.addEventListener("load", () => {
-            if (window.lucide) lucide.createIcons();
+        window.addEventListener("load", function () {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
         });
     </script>
 </body>
