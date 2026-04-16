@@ -1308,8 +1308,16 @@
         }
 
 
-// === CHAT STATE → PARENT (ALWAYS SEND REAL STATE) ===
 (function () {
+
+    let isIframeActive = false;
+
+    window.addEventListener("message", (event) => {
+        if (event.data && event.data.type === "zynq_visibility") {
+            isIframeActive = event.data.active;
+            emitState();
+        }
+    });
 
     let lastState = {
         unread: -1,
@@ -1318,14 +1326,13 @@
 
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
-
         return Object.values(db.friends).reduce((total, f) => {
             return total + (f.unread || 0);
         }, 0);
     }
 
     function isInChat() {
-        return currentChat !== null;
+        return currentChat !== null && isIframeActive;
     }
 
     function emitState() {
@@ -1353,7 +1360,6 @@
         setTimeout(emitState, 10);
     }
 
-    // hooks
     const r = window.render;
     window.render = function () {
         if (r) r.apply(this, arguments);
