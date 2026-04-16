@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,15 +97,40 @@
     </div>
     <!-- klein help menu -->
     <div id="helpModal" class="modal">
-        <div class="modal-content" style="max-width:380px">
-            <h2 style="margin-top:0">Help &amp; Shortcuts</h2>
-            <div style="text-align:left;font-size:15.5px;line-height:1.8">
-                <div><strong>ESC</strong> → huidige chat sluiten</div>
-                <div><strong>+</strong> → vriend toevoegen</div>
+        <div class="modal-content" style="max-width:420px; padding: 20px; position:relative;">
+    
+            <h2 style="margin-top:0; text-align:center;">ZYNQ Tutorial</h2>
+    
+            <!-- Video -->
+            <div style="margin-top:16px; width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden; background:black;">
+                <video
+                    src="./assets/video/zynq-chat-tutorial.mp4"
+                    controls
+                    controlsList="nodownload"
+                    style="width:100%; height:100%; display:block;"
+                    allowfullscreen>
+                </video>
             </div>
-            <button onclick="closeHelpModal()" style="margin-top:24px;width:100%;height:52px">OK, begrepen</button>
+    
+            <!-- Close button -->
+            <button onclick="closeHelpModal()"
+                style="
+                    margin-top:18px;
+                    width:100%;
+                    height:52px;
+                    border:none;
+                    border-radius:14px;
+                    background:#6366f1;
+                    color:white;
+                    font-weight:700;
+                    cursor:pointer;
+                ">
+                Close
+            </button>
+    
         </div>
     </div>
+    
     <div id="contextMenu">
         <div onclick="editCurrentFriend()">Edit name</div>
         <div onclick="deleteCurrentFriend()">Delete friend</div>
