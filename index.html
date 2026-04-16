@@ -14,6 +14,7 @@
   --text:#f1f2f8;
   --muted:#8f94a3;
   --btn-size: 60px;
+  --notification: #22c55e; /* Groene kleur voor de dot */
 }
 
 body{
@@ -43,14 +44,12 @@ body{
   left: 0;
   top: 0;
   width: 3px;
-  height: 30px; /* Hoogte van het balkje */
+  height: 30px; 
   background: var(--accent);
   border-radius: 0 4px 4px 0;
-  /* De slide animatie */
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 10;
-  /* Verticaal centreren binnen de eerste knop (60px knop - 30px balk = 30px over / 2 = 15px) */
   margin-top: 15px; 
 }
 
@@ -65,6 +64,7 @@ body{
   color: var(--muted);
   z-index: 5;
   transition: color 0.2s;
+  position: relative; /* Nodig om de dot te positioneren */
 }
 
 .icon-btn:hover{
@@ -80,6 +80,23 @@ body{
   height:22px;
 }
 
+/* DE GROENE DOT */
+.badge {
+  position: absolute;
+  top: 18px;    /* Iets naar beneden vanaf de bovenkant van de knop */
+  right: 18px;  /* Iets naar binnen vanaf de rechterkant */
+  width: 10px;
+  height: 10px;
+  background-color: var(--notification);
+  border-radius: 50%;
+  border: 2px solid var(--sidebar); /* Geeft een mooie rand zodat hij loskomt van het icoon */
+  display: none; /* Standaard verborgen */
+}
+
+.badge.visible {
+  display: block;
+}
+
 /* CONTENT */
 .content{
   flex:1;
@@ -87,19 +104,18 @@ body{
   background:var(--panel);
 }
 
-/* IFRAME SYSTEM (GEEN FADE) */
 iframe{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   border:0;
-  display: none; /* Direct verbergen */
+  display: none;
   background:var(--panel);
 }
 
 iframe.active{
-  display: block; /* Direct tonen */
+  display: block;
 }
 </style>
 </head>
@@ -111,7 +127,12 @@ iframe.active{
 
   <div class="icon-btn active" onclick="sw('home', this, 0)"><i data-lucide="home"></i></div>
   <div class="icon-btn" onclick="sw('games', this, 1)"><i data-lucide="gamepad-2"></i></div>
-  <div class="icon-btn" onclick="sw('chat', this, 2)"><i data-lucide="message-circle"></i></div>
+  
+  <div id="chat-nav" class="icon-btn" onclick="sw('chat', this, 2)">
+    <i data-lucide="message-circle"></i>
+    <div id="chat-badge" class="badge"></div>
+  </div>
+
   <div class="icon-btn" onclick="sw('links', this, 3)"><i data-lucide="link"></i></div>
   <div class="icon-btn" onclick="sw('settings', this, 4)"><i data-lucide="settings"></i></div>
 </div>
@@ -126,26 +147,34 @@ iframe.active{
 
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
-// Initialiseer de icoontjes
 lucide.createIcons();
 
 function sw(id, el, index){
-  // 1. Switch de Iframes (direct via display block/none)
   document.querySelectorAll("iframe").forEach(f => {
     f.classList.toggle("active", f.id === id);
   });
 
-  // 2. Update de actieve kleur van de iconen
   document.querySelectorAll(".icon-btn").forEach(b => {
     b.classList.remove("active");
   });
   el.classList.add("active");
 
-  // 3. Slide de indicator naar de juiste positie
-  // We vermenigvuldigen de index met de knop-hoogte (60px)
   const indicator = document.getElementById('indicator');
   indicator.style.transform = `translateY(${index * 60}px)`;
 }
+
+// === LUISTEREN NAAR UNREAD EVENT VANUIT IFRAME ===
+window.addEventListener('message', function(event) {
+  // Controleer of het bericht het juiste type heeft
+  if (event.data && event.data.type === 'zynq_unread') {
+    const badge = document.getElementById('chat-badge');
+    if (event.data.hasUnread) {
+      badge.classList.add('visible');
+    } else {
+      badge.classList.remove('visible');
+    }
+  }
+});
 </script>
 
 </body>
