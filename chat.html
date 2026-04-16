@@ -1311,29 +1311,33 @@
     </script>
     <script>
 (function(){
-function getUnread(){
+function countUnread(){
 return Object.values(db.friends||{}).reduce((a,f)=>a+(f.unread||0),0)
 }
 
 function emit(){
-const state={
-type:'zynq_state',
-hasUnread:getUnread()>0,
-unread:getUnread(),
+window.parent?.postMessage({
+type:"zynq_state",
+hasUnread:countUnread()>0,
+unread:countUnread(),
+inChat:!!currentChat,
 timestamp:Date.now()
+},"*")
 }
 
-if(window.parent && window.parent!==window){
-window.parent.postMessage(state,'*')
-}
-}
+function push(){setTimeout(emit,0)}
 
-const r=window.render;window.render=function(){r&&r.apply(this,arguments);setTimeout(emit,10)}
-const m=window.renderMessages;window.renderMessages=function(){m&&m.apply(this,arguments);setTimeout(emit,10)}
-const s=window.send;window.send=function(){s&&s.apply(this,arguments);setTimeout(emit,10)}
+const oldSend=window.send
+window.send=function(){oldSend?.apply(this,arguments);push()}
 
-window.addEventListener('load',()=>setTimeout(emit,200))
-document.addEventListener('visibilitychange',emit)
+const oldRender=window.render
+window.render=function(){oldRender?.apply(this,arguments);push()}
+
+const oldRM=window.renderMessages
+window.renderMessages=function(){oldRM?.apply(this,arguments);push()}
+
+document.addEventListener("visibilitychange",push)
+window.addEventListener("load",()=>setTimeout(push,200))
 })()
 </script>
 </body>
