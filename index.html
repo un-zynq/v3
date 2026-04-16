@@ -146,10 +146,19 @@ iframe.active{
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
 
+let activeTab = "home"; // 🔥 TRACK welke tab actief is
+let chatState = {
+  hasUnread: false,
+  inChat: false
+};
+
 function sw(id, el, index){
+  activeTab = id; // 🔥 update actieve tab
+
   document.querySelectorAll("iframe").forEach(f => {
     f.classList.toggle("active", f.id === id);
   });
@@ -161,67 +170,40 @@ function sw(id, el, index){
 
   const indicator = document.getElementById('indicator');
   indicator.style.transform = `translateY(${index * 60}px)`;
+
+  updateBadge(); // 🔥 herbereken dot bij tab switch
 }
 
-// === FINAL BADGE LOGIC (CORRECT VISIBILITY FIX) ===
-(function () {
+// === ONTVANG STATE VAN CHAT ===
+window.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'zynq_state') {
 
-  let chatState = {
-    hasUnread: false,
-    inChat: false
-  };
-
-  let currentTab = 'home';
-
-  const badge = document.getElementById('chat-badge');
-
-  function updateBadge() {
-
-    // 🔥 CRUCIALE FIX:
-    // alleen verbergen als:
-    // - je op chat tab zit
-    // - EN iframe effectief zichtbaar is
-    // - EN je in een gesprek zit
-
-    const chatIframe = document.getElementById('chat');
-    const chatVisible = chatIframe.classList.contains('active');
-
-    const shouldHide =
-      currentTab === 'chat' &&
-      chatVisible &&
-      chatState.inChat;
-
-    if (chatState.hasUnread && !shouldHide) {
-      badge.classList.add('visible');
-    } else {
-      badge.classList.remove('visible');
-    }
-  }
-
-  // luister naar chat iframe
-  window.addEventListener('message', function (event) {
-    if (event.data && event.data.type === 'zynq_state') {
-      chatState = {
-        hasUnread: event.data.hasUnread,
-        inChat: event.data.inChat
-      };
-      updateBadge();
-    }
-  });
-
-  // override sw
-  const originalSw = window.sw;
-  window.sw = function (id, el, index) {
-    currentTab = id;
-
-    if (originalSw) originalSw(id, el, index);
+    chatState.hasUnread = event.data.hasUnread;
+    chatState.inChat = event.data.inChat;
 
     updateBadge();
-  };
+  }
+});
 
-})();
+// === SLIMME DOT LOGIC ===
+function updateBadge() {
+  const badge = document.getElementById('chat-badge');
 
-  
+  const isOnChatTab = activeTab === "chat";
+  const isInsideChat = chatState.inChat;
+
+  // 🔥 DE GOUDEN REGEL:
+  // Toon ALTIJD unread
+  // BEHALVE als je:
+  // - op chat tab zit
+  // - EN effectief in een gesprek zit
+
+  if (chatState.hasUnread && !(isOnChatTab && isInsideChat)) {
+    badge.classList.add('visible');
+  } else {
+    badge.classList.remove('visible');
+  }
+}
 </script>
 
 </body>
