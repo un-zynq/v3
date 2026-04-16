@@ -1306,82 +1306,81 @@
         function closeHelpModal() {
             document.getElementById('helpModal').style.display = 'none';
         }
-// === UNREAD EVENT SYSTEM (CHAT → PARENT) ===
+
+
+// === UNREAD + CHAT STATE → PARENT ===
 (function () {
 
-    let lastUnreadCount = 0;
+    let lastState = {
+        unread: 0,
+        inChat: false
+    };
 
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
 
-        return Object.values(db.friends).reduce((total, friend) => {
-            return total + (friend.unread || 0);
+        return Object.values(db.friends).reduce((total, f) => {
+            return total + (f.unread || 0);
         }, 0);
     }
 
-    function emitUnreadEvent(count) {
+    function isInChat() {
+        return currentChat !== null;
+    }
+
+    function emitState() {
+        const unread = getUnreadCount();
+        const inChat = isInChat();
+
+        // alleen sturen als iets veranderd is
+        if (unread === lastState.unread && inChat === lastState.inChat) return;
+
+        lastState = { unread, inChat };
+
         const payload = {
-            type: 'zynq_unread',
-            hasUnread: count > 0,
-            count: count,
+            type: 'zynq_state',
+            hasUnread: unread > 0,
+            unread: unread,
+            inChat: inChat,
             timestamp: Date.now()
         };
 
-        // stuur naar parent (index.html)
         if (window.parent && window.parent !== window) {
             window.parent.postMessage(payload, '*');
         }
-
-        // optioneel lokaal event (debug / uitbreidingen)
-        window.dispatchEvent(
-            new CustomEvent('zynq_unread', { detail: payload })
-        );
     }
 
-    function checkUnreadChange() {
-        const current = getUnreadCount();
-
-        if (current !== lastUnreadCount) {
-            lastUnreadCount = current;
-            emitUnreadEvent(current);
-        }
+    function triggerCheck() {
+        setTimeout(emitState, 20);
     }
 
-    // === HOOK IN BESTAANDE SYSTEMEN ===
-
-    // render hook (friends list updates / unread counters)
-    const originalRender = window.render;
+    // === HOOKS ===
+    const origRender = window.render;
     window.render = function () {
-        if (originalRender) originalRender.apply(this, arguments);
-        checkUnreadChange();
+        if (origRender) origRender.apply(this, arguments);
+        triggerCheck();
     };
 
-    // messages hook (nieuwe berichten / openen chat)
-    const originalRenderMessages = window.renderMessages;
+    const origRenderMessages = window.renderMessages;
     window.renderMessages = function () {
-        if (originalRenderMessages) {
-            originalRenderMessages.apply(this, arguments);
-        }
-        checkUnreadChange();
+        if (origRenderMessages) origRenderMessages.apply(this, arguments);
+        triggerCheck();
     };
 
-    // send hook (voor zekerheid als jij zelf berichten stuurt)
-    const originalSend = window.send;
+    const origSend = window.send;
     window.send = function () {
-        if (originalSend) originalSend.apply(this, arguments);
-        setTimeout(checkUnreadChange, 50);
+        if (origSend) origSend.apply(this, arguments);
+        triggerCheck();
     };
 
-    // delete hook (als chats verdwijnen)
-    const originalDelete = window.performDelete;
+    const origDelete = window.performDelete;
     window.performDelete = function (id) {
-        if (originalDelete) originalDelete.apply(this, arguments);
-        setTimeout(checkUnreadChange, 50);
+        if (origDelete) origDelete.apply(this, arguments);
+        triggerCheck();
     };
 
-    // init check bij load
     window.addEventListener('load', () => {
-        setTimeout(checkUnreadChange, 300);
+        setTimeout(emitState, 200);
     });
 
 })();
