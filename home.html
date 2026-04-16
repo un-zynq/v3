@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZYNQ Home</title>
+    <title>ZYNQ Home | Soft Edition</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
     :root {
-        --accent: #6366f1;
-        --accent-light: #a5b4fc;
-        --bg: #060607;
-        --text: #f1f2f8;
-        --muted: #8f94a3;
+        --accent: #818cf8;
+        --accent-soft: #c7d2fe;
+        --bg: #08080a;
+        --text: #eef2ff;
     }
 
     * {
@@ -34,7 +33,7 @@
         overflow: hidden;
     }
 
-    /* BACKGROUND SYSTEM */
+    /* ACHTERGROND - ZACHTER GEMAAKT */
     .bg {
         position: absolute;
         inset: 0;
@@ -42,132 +41,97 @@
         background-image: url('https://i.ytimg.com/vi/FlzJ5FQXBj8/maxresdefault.jpg');
         background-size: cover;
         background-position: center;
-        background-repeat: no-repeat;
+        filter: brightness(0.25) blur(4px); /* Blur toegevoegd voor zachtheid */
+        transform: scale(1.1); /* Scale om witte randen door blur te voorkomen */
         z-index: -2;
     }
 
-    /* Donkere overlay voor leesbaarheid + Raster */
-    .bg::before {
-        content: "";
+    /* Overlay met fijnere korrel */
+    .bg-overlay {
         position: absolute;
         inset: 0;
-        background: rgba(6, 6, 9, 0.45);
-        background-image: 
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 50px 50px;
-    }
-
-    /* Vignette effect */
-    .bg::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.85));
-    }
-
-    /* Glow blobs */
-    .blob {
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        background: var(--accent);
-        filter: blur(160px);
-        opacity: 0.15;
-        border-radius: 50%;
-        animation: float 18s ease-in-out infinite;
+        background: radial-gradient(circle at center, rgba(8, 8, 10, 0.4), var(--bg) 90%);
         z-index: -1;
     }
 
-    .b1 { top: -200px; left: -100px; }
-    .b2 { 
-        bottom: -250px; 
-        right: -150px; 
-        background: var(--accent-light); 
-        animation-delay: -5s; 
+    /* Zachte Glow Blobs */
+    .blob {
+        position: absolute;
+        width: 800px;
+        height: 800px;
+        background: var(--accent);
+        filter: blur(180px);
+        opacity: 0.12;
+        border-radius: 50%;
+        animation: float 25s ease-in-out infinite;
+        z-index: -1;
     }
+
+    .b1 { top: -300px; left: -200px; opacity: 0.1; }
+    .b2 { bottom: -300px; right: -200px; background: var(--accent-soft); animation-delay: -7s; }
 
     @keyframes float {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(30px, -50px) scale(1.1); }
-        66% { transform: translate(-20px, 20px) scale(0.9); }
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(40px, 60px); }
     }
 
-    /* CONTENT WRAPPER */
+    /* CONTENT */
     .wrap {
         position: relative;
         text-align: center;
-        max-width: 600px;
-        padding: 40px;
         z-index: 10;
     }
 
-    /* LOGO */
     .logo {
-        font-size: 100px;
-        font-weight: 800;
-        letter-spacing: -5px;
+        font-size: 92px;
+        font-weight: 600; /* Minder zwaar dan 800 */
+        letter-spacing: -2px;
         line-height: 1;
-        background: linear-gradient(to bottom, #fff 30%, var(--accent-light));
+        background: linear-gradient(to bottom, #ffffff, #d1d5db);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0;
-        filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.4));
-        animation: text-glow 4s ease-in-out infinite;
+        /* Zachte schaduw in plaats van felle glow */
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
     }
 
-    @keyframes text-glow {
-        0%, 100% { filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.3)); }
-        50% { filter: drop-shadow(0 0 50px rgba(99, 102, 241, 0.6)); }
-    }
-
-    /* SUBTITLE */
     .sub {
-        color: var(--text);
-        font-size: 20px;
-        margin-top: 15px;
+        color: #94a3b8;
+        font-size: 16px;
+        margin-top: 20px;
         font-weight: 300;
-        letter-spacing: 4px;
+        letter-spacing: 6px;
         text-transform: uppercase;
-        opacity: 0.8;
-        text-shadow: 0 4px 15px rgba(0,0,0,0.8);
     }
 
-    /* FOOTER PILL */
+    /* MINIMALISTISCHE PILL */
     .pill {
         position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 8px 20px;
+        bottom: 40px;
+        padding: 6px 16px;
         border-radius: 100px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: var(--accent-light);
-        font-size: 11px;
-        font-weight: 600;
-        font-family: monospace;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 10px;
         letter-spacing: 2px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        z-index: 10;
+        backdrop-filter: blur(5px);
     }
     </style>
 </head>
 <body>
 
-    <div class="bg">
-        <div class="blob b1"></div>
-        <div class="blob b2"></div>
-    </div>
+    <div class="bg"></div>
+    <div class="bg-overlay"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
 
     <div class="wrap">
         <h1 class="logo">ZYNQ</h1>
-        <div class="sub">Play. Chat. Connect.</div>
+        <div class="sub">Play • Chat • Connect</div>
     </div>
 
-    <div class="pill">VERSION 1.0</div>
+    <div class="pill">V1.0.0</div>
 
 </body>
 </html>
