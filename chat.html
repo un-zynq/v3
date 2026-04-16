@@ -1308,6 +1308,8 @@
         }
 
 
+    </script>
+    <script>
 (function () {
 
     let isIframeActive = false;
@@ -1319,16 +1321,9 @@
         }
     });
 
-    let lastState = {
-        unread: -1,
-        inChat: null
-    };
-
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
-        return Object.values(db.friends).reduce((total, f) => {
-            return total + (f.unread || 0);
-        }, 0);
+        return Object.values(db.friends).reduce((t, f) => t + (f.unread || 0), 0);
     }
 
     function isInChat() {
@@ -1336,18 +1331,11 @@
     }
 
     function emitState() {
-        const unread = getUnreadCount();
-        const inChat = isInChat();
-
-        if (unread === lastState.unread && inChat === lastState.inChat) return;
-
-        lastState = { unread, inChat };
-
         const payload = {
             type: 'zynq_state',
-            hasUnread: unread > 0,
-            unread: unread,
-            inChat: inChat,
+            hasUnread: getUnreadCount() > 0,
+            unread: getUnreadCount(),
+            inChat: isInChat(),
             timestamp: Date.now()
         };
 
@@ -1356,39 +1344,33 @@
         }
     }
 
-    function trigger() {
-        setTimeout(emitState, 10);
+    function hook(fnName) {
+        const original = window[fnName];
+        if (!original) return;
+
+        window[fnName] = function () {
+            const result = original.apply(this, arguments);
+            setTimeout(emitState, 0);
+            return result;
+        };
     }
 
-    const r = window.render;
-    window.render = function () {
-        if (r) r.apply(this, arguments);
-        trigger();
-    };
+    hook('render');
+    hook('renderMessages');
+    hook('send');
+    hook('performDelete');
 
-    const rm = window.renderMessages;
-    window.renderMessages = function () {
-        if (rm) rm.apply(this, arguments);
-        trigger();
-    };
-
-    const s = window.send;
-    window.send = function () {
-        if (s) s.apply(this, arguments);
-        trigger();
-    };
-
-    const d = window.performDelete;
-    window.performDelete = function (id) {
-        if (d) d.apply(this, arguments);
-        trigger();
-    };
+    // 🔥 CRUCIAAL: ook triggeren bij inkomende messages
+    const originalPeerMessage = peer?.on;
+    document.addEventListener('DOMContentLoaded', () => {
+        setInterval(emitState, 500);
+    });
 
     window.addEventListener('load', () => {
         setTimeout(emitState, 200);
     });
 
 })();
-    </script>
+</script>
 </body>
 </html>
