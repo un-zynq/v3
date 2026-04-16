@@ -1306,34 +1306,36 @@
         function closeHelpModal() {
             document.getElementById('helpModal').style.display = 'none';
         }
-        // === UNREAD EVENT BRIDGE TO PARENT ===
+// === UNREAD EVENT SYSTEM (CHAT → PARENT) ===
 (function () {
+
     let lastUnreadCount = 0;
 
     function getUnreadCount() {
         if (!db || !db.friends) return 0;
-        return Object.values(db.friends).reduce((total, f) => {
-            return total + (f.unread || 0);
+
+        return Object.values(db.friends).reduce((total, friend) => {
+            return total + (friend.unread || 0);
         }, 0);
     }
 
     function emitUnreadEvent(count) {
-        const hasUnread = count > 0;
-
         const payload = {
             type: 'zynq_unread',
-            hasUnread: hasUnread,
+            hasUnread: count > 0,
             count: count,
             timestamp: Date.now()
         };
 
-        // naar parent sturen (iframe support)
+        // stuur naar parent (index.html)
         if (window.parent && window.parent !== window) {
             window.parent.postMessage(payload, '*');
         }
 
-        // ook lokaal event dispatchen (optioneel handig)
-        window.dispatchEvent(new CustomEvent('zynq_unread', { detail: payload }));
+        // optioneel lokaal event (debug / uitbreidingen)
+        window.dispatchEvent(
+            new CustomEvent('zynq_unread', { detail: payload })
+        );
     }
 
     function checkUnreadChange() {
@@ -1345,22 +1347,43 @@
         }
     }
 
-    // Hook in render (wordt vaak aangeroepen → perfect moment)
+    // === HOOK IN BESTAANDE SYSTEMEN ===
+
+    // render hook (friends list updates / unread counters)
     const originalRender = window.render;
     window.render = function () {
         if (originalRender) originalRender.apply(this, arguments);
         checkUnreadChange();
     };
 
-    // Hook in renderMessages (extra zekerheid)
+    // messages hook (nieuwe berichten / openen chat)
     const originalRenderMessages = window.renderMessages;
     window.renderMessages = function () {
-        if (originalRenderMessages) originalRenderMessages.apply(this, arguments);
+        if (originalRenderMessages) {
+            originalRenderMessages.apply(this, arguments);
+        }
         checkUnreadChange();
     };
 
-    // Init check (bij laden)
-    setTimeout(checkUnreadChange, 500);
+    // send hook (voor zekerheid als jij zelf berichten stuurt)
+    const originalSend = window.send;
+    window.send = function () {
+        if (originalSend) originalSend.apply(this, arguments);
+        setTimeout(checkUnreadChange, 50);
+    };
+
+    // delete hook (als chats verdwijnen)
+    const originalDelete = window.performDelete;
+    window.performDelete = function (id) {
+        if (originalDelete) originalDelete.apply(this, arguments);
+        setTimeout(checkUnreadChange, 50);
+    };
+
+    // init check bij load
+    window.addEventListener('load', () => {
+        setTimeout(checkUnreadChange, 300);
+    });
+
 })();
     </script>
 </body>
