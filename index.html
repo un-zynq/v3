@@ -150,10 +150,7 @@ iframe.active{
 lucide.createIcons();
 
 let activeTab = "home";
-let chatState = {
-  hasUnread: false,
-  inChat: false
-};
+let chatState = { hasUnread: false, inChat: false };
 
 function sw(id, el, index){
   activeTab = id;
@@ -181,10 +178,9 @@ function sw(id, el, index){
   updateBadge();
 }
 
-window.addEventListener('message', function(event) {
+window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'zynq_state') {
-    chatState.hasUnread = event.data.hasUnread;
-    chatState.inChat = event.data.inChat;
+    chatState = event.data;
     updateBadge();
   }
 });
@@ -192,10 +188,7 @@ window.addEventListener('message', function(event) {
 function updateBadge() {
   const badge = document.getElementById('chat-badge');
 
-  const isOnChatTab = activeTab === "chat";
-  const isInsideChat = chatState.inChat;
-
-  if (chatState.hasUnread && !(isOnChatTab && isInsideChat)) {
+  if (chatState.hasUnread && !(activeTab === "chat" && chatState.inChat)) {
     badge.classList.add('visible');
   } else {
     badge.classList.remove('visible');
