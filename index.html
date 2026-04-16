@@ -146,18 +146,17 @@ iframe.active{
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
 
-let activeTab = "home"; // 🔥 TRACK welke tab actief is
+let activeTab = "home";
 let chatState = {
   hasUnread: false,
   inChat: false
 };
 
 function sw(id, el, index){
-  activeTab = id; // 🔥 update actieve tab
+  activeTab = id;
 
   document.querySelectorAll("iframe").forEach(f => {
     f.classList.toggle("active", f.id === id);
@@ -171,32 +170,30 @@ function sw(id, el, index){
   const indicator = document.getElementById('indicator');
   indicator.style.transform = `translateY(${index * 60}px)`;
 
-  updateBadge(); // 🔥 herbereken dot bij tab switch
+  const chatFrame = document.getElementById("chat");
+  if (chatFrame && chatFrame.contentWindow) {
+    chatFrame.contentWindow.postMessage({
+      type: "zynq_visibility",
+      active: id === "chat"
+    }, "*");
+  }
+
+  updateBadge();
 }
 
-// === ONTVANG STATE VAN CHAT ===
 window.addEventListener('message', function(event) {
   if (event.data && event.data.type === 'zynq_state') {
-
     chatState.hasUnread = event.data.hasUnread;
     chatState.inChat = event.data.inChat;
-
     updateBadge();
   }
 });
 
-// === SLIMME DOT LOGIC ===
 function updateBadge() {
   const badge = document.getElementById('chat-badge');
 
   const isOnChatTab = activeTab === "chat";
   const isInsideChat = chatState.inChat;
-
-  // 🔥 DE GOUDEN REGEL:
-  // Toon ALTIJD unread
-  // BEHALVE als je:
-  // - op chat tab zit
-  // - EN effectief in een gesprek zit
 
   if (chatState.hasUnread && !(isOnChatTab && isInsideChat)) {
     badge.classList.add('visible');
