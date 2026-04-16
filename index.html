@@ -164,17 +164,48 @@ function sw(id, el, index){
 }
 
 // === LUISTEREN NAAR UNREAD EVENT VANUIT IFRAME ===
-window.addEventListener('message', function(event) {
-  // Controleer of het bericht het juiste type heeft
-  if (event.data && event.data.type === 'zynq_unread') {
-    const badge = document.getElementById('chat-badge');
-    if (event.data.hasUnread) {
+// === CHAT VISIBILITY + UNREAD CONTROL ===
+(function () {
+  let hasUnread = false;
+
+  const chatIframe = document.getElementById('chat');
+  const badge = document.getElementById('chat-badge');
+
+  function isChatActive() {
+    return chatIframe.classList.contains('active');
+  }
+
+  function updateBadge() {
+    // alleen tonen als er unread is EN chat niet open is
+    if (hasUnread && !isChatActive()) {
       badge.classList.add('visible');
     } else {
       badge.classList.remove('visible');
     }
   }
-});
+
+  // luister naar unread events vanuit chat iframe
+  window.addEventListener('message', function (event) {
+    if (event.data && event.data.type === 'zynq_unread') {
+      hasUnread = event.data.hasUnread;
+      updateBadge();
+    }
+  });
+
+  // override je sw functie zodat we weten wanneer user switcht
+  const originalSw = window.sw;
+  window.sw = function (id, el, index) {
+    if (originalSw) originalSw(id, el, index);
+
+    // zodra je naar chat gaat → badge meteen weg (want je leest ze nu)
+    if (id === 'chat') {
+      badge.classList.remove('visible');
+    }
+
+    updateBadge();
+  };
+
+})();
 </script>
 
 </body>
