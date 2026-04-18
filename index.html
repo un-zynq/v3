@@ -14,6 +14,7 @@
             --muted: #8f94a3;
             --btn-size: 60px;
         }
+
         body {
             margin: 0;
             height: 100vh;
@@ -23,6 +24,8 @@
             color: var(--text);
             overflow: hidden;
         }
+
+        /* Sidebar Styling */
         .sidebar {
             width: var(--btn-size);
             background: var(--sidebar);
@@ -31,7 +34,9 @@
             align-items: center;
             border-right: 1px solid rgba(255,255,255,.06);
             position: relative;
+            z-index: 20;
         }
+
         #indicator {
             position: absolute;
             left: 0;
@@ -43,8 +48,9 @@
             transition: transform .35s cubic-bezier(.4,0,.2,1);
             pointer-events: none;
             z-index: 10;
-            margin-top: 15px;
+            margin-top: 15px; /* Centeert de indicator bij de iconen */
         }
+
         .icon-btn {
             width: var(--btn-size);
             height: var(--btn-size);
@@ -53,35 +59,44 @@
             justify-content: center;
             cursor: pointer;
             color: var(--muted);
-            position: relative;
+            transition: color 0.2s;
         }
+
+        .icon-btn:hover {
+            color: var(--text);
+        }
+
         .icon-btn.active {
             color: var(--accent);
         }
+
+        /* Content & Iframe Styling */
         .content {
             flex: 1;
             position: relative;
             background: var(--panel);
         }
+
         iframe {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
             border: 0;
-            display: none;
+            display: none; /* Standaard onzichtbaar */
             background: var(--panel);
         }
+
         iframe.active {
-            display: block;
+            display: block; /* Alleen de actieve iframe tonen */
         }
     </style>
 </head>
 <body>
-    
+
     <div class="sidebar">
         <div id="indicator"></div>
-
+        
         <div class="icon-btn active" onclick="sw('home', this, 0)">
             <i data-lucide="home"></i>
         </div>
@@ -99,27 +114,39 @@
         </div>
     </div>
 
+    <div class="content">
+        <iframe id="home" src="home.html" class="active"></iframe>
+        <iframe id="games" src="games.html"></iframe>
+        <iframe id="music" src="music.html"></iframe>
+        <iframe id="links" src="links.html"></iframe>
+        <iframe id="settings" src="settings.html"></iframe>
+    </div>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         function sw(tabId, clickedElement, indicatorIndex) {
-            // Activeer de juiste iframe
-            document.querySelectorAll("iframe").forEach(frame => {
-                frame.classList.toggle("active", frame.id === tabId);
+            // 1. Verberg alle iframes en toon de geselecteerde
+            const frames = document.querySelectorAll("iframe");
+            frames.forEach(frame => {
+                frame.classList.remove("active");
+                if (frame.id === tabId) {
+                    frame.classList.add("active");
+                }
             });
 
-            // Activeer de juiste knop in de sidebar
+            // 2. Update de actieve status van de knoppen
             document.querySelectorAll(".icon-btn").forEach(btn => {
                 btn.classList.remove("active");
             });
             clickedElement.classList.add("active");
 
-            // Verplaats de indicator
+            // 3. Verplaats de indicator (60px is de hoogte van een btn-size)
             document.getElementById("indicator").style.transform = `translateY(${indicatorIndex * 60}px)`;
         }
 
-        // Lucide icons initialiseren
-        window.addEventListener("load", function () {
-            if (window.lucide) {
+        // Initialiseer iconen bij het laden
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         });
