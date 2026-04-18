@@ -78,30 +78,25 @@
     </style>
 </head>
 <body>
+    
     <div class="sidebar">
         <div id="indicator"></div>
-        <div class="icon-btn active" onclick="sw('home',this,0)">
+
+        <div class="icon-btn active" onclick="sw('home', this, 0)">
             <i data-lucide="home"></i>
         </div>
-        <div class="icon-btn" onclick="sw('games',this,1)">
+        <div class="icon-btn" onclick="sw('games', this, 1)">
             <i data-lucide="gamepad-2"></i>
         </div>
-        <div class="icon-btn" onclick="sw('chat',this,2)">
-            <i data-lucide="message-circle"></i>
+        <div class="icon-btn" onclick="sw('music', this, 2)">
+            <i data-lucide="music"></i>
         </div>
-        <div class="icon-btn" onclick="sw('links',this,3)">
+        <div class="icon-btn" onclick="sw('links', this, 3)">
             <i data-lucide="link"></i>
         </div>
-        <div class="icon-btn" onclick="sw('settings',this,4)">
+        <div class="icon-btn" onclick="sw('settings', this, 4)">
             <i data-lucide="settings"></i>
         </div>
-    </div>
-    <div class="content">
-        <iframe id="home" class="active" src="home.html"></iframe>
-        <iframe id="games" src="games.html"></iframe>
-        <iframe id="chat" src="chat.html"></iframe>
-        <iframe id="links" src="links.html"></iframe>
-        <iframe id="settings" src="settings.html"></iframe>
     </div>
 
     <script src="https://unpkg.com/lucide@latest"></script>
