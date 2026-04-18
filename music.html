@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZYNQ | Premium Music</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        /* --- ROOT & SCROLLBAR --- */
+        :root {
+            --accent: #6366f1;
+            --accent-glow: rgba(99,102,241,0.3);
+            --bg: #020203;
+            --card-bg: #0d0d12;
+            --nav: rgba(2,2,3,0.9);
+            --text: #fff;
+            --muted: #64748b;
+            --nav-height: 72px;
+            --sidebar-width: 350px;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, var(--bg) 85%);
+        }
+
+        /* --- NAVBAR --- */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--nav-height);
+            background: var(--nav);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 1001;
+        }
+
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg,#fff,var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            margin-right: 40px;
+        }
+
+        .search-wrapper { flex: 1; max-width: 400px; }
+        .search {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+        }
+
+        /* BURGER MENU BUTTON */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            margin-top: var(--nav-height);
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .track-list { flex: 1; overflow-y: auto; padding: 20px; }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+        }
+        .track-item:hover { background: rgba(255,255,255,0.05); }
+        .track-item.active { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); }
+        .track-item img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
+        .track-meta { overflow: hidden; }
+        .track-meta .title { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-meta .artist { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+
+        /* --- PLAYER VIEW --- */
+        .main-view {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .player-content {
+            width: 100%;
+            max-width: 800px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .cover-art-box {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .cover-art-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .track-info-panel { text-align: left; }
+        .badge {
+            display: inline-flex;
+            padding: 5px 12px;
+            background: var(--accent);
+            border-radius: 30px;
+            font-size: 10px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .main-title { font-size: 42px; font-weight: 800; margin-bottom: 8px; letter-spacing: -2px; }
+        .main-artist { color: var(--muted); font-size: 16px; margin-bottom: 30px; }
+
+        .controls { display: flex; align-items: center; gap: 30px; }
+        .btn-ctrl { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; opacity: 0.5; }
+        .btn-play-toggle { width: 64px; height: 64px; background: #fff; color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 1; }
+
+        .progress-system { margin-top: 40px; width: 100%; }
+        .progress-bg { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; }
+
+        #youtube-engine { display: none; }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 900px) {
+            .navbar { padding: 0 20px; }
+            .menu-toggle { display: block; } /* Show burger menu */
+            
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: var(--nav-height);
+                bottom: 0;
+                width: 100%;
+                background: var(--bg);
+                transform: translateX(-100%); /* Hidden by default */
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .player-content { 
+                grid-template-columns: 1fr; 
+                text-align: center; 
+                gap: 30px; 
+            }
+            .track-info-panel { text-align: center; }
+            .controls { justify-content: center; }
+            .cover-art-box { max-width: 280px; margin: 0 auto; }
+            .main-title { font-size: 28px; }
+        }
+
+        /* Ultra Small Devices */
+        @media (max-width: 480px) {
+            .nav-logo { margin-right: 15px; font-size: 20px; }
+            .search-wrapper { max-width: 150px; }
+            .main-view { padding: 20px; }
+            .cover-art-box { max-width: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-overlay"></div>
+
+<nav class="navbar">
+    <a href="#" class="nav-logo">ZYNQ</a>
+    <div class="search-wrapper">
+        <input id="search" class="search" placeholder="Search..." autocomplete="off">
+    </div>
+    <button class="menu-toggle" onclick="toggleMenu()">
+        <i class="fas fa-bars" id="menuIcon"></i>
+    </button>
+</nav>
+
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        <div class="track-list" id="trackList"></div>
+    </aside>
+
+    <main class="main-view">
+        <div class="player-content">
+            <div class="cover-art-box">
+                <img id="mainCover" src="https://i.ytimg.com/vi/FlzJ5FQXBj8/maxresdefault.jpg" alt="Welcome">
+            </div>
+            <div class="track-info-panel">
+                <span class="badge" id="nowPlayingBadge">Premium Audio</span>
+                <h1 class="main-title" id="mainTitle">Select a track</h1>
+                <p class="main-artist" id="mainArtist">Choose from your library</p>
+
+                <div class="controls">
+                    <button class="btn-ctrl" onclick="navigate(-1)"><i class="fas fa-step-backward"></i></button>
+                    <button class="btn-ctrl btn-play-toggle" onclick="togglePlay()"><i id="playIcon" class="fas fa-play"></i></button>
+                    <button class="btn-ctrl" onclick="navigate(1)"><i class="fas fa-step-forward"></i></button>
+                </div>
+
+                <div class="progress-system">
+                    <div class="progress-bg">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="youtube-engine"></div>
+
+<script>
+    const videoIds = [
+        "ekr2nIex040","ko70cExuzZM","mrV8kK5t0V8","SOJpE1KMUbo","u2ah9tWTkmk",
+        "KU5V5WZVcVE","rK5TyISxZ_M","lY5V4hSLWY8","lIxQe1R5hs0","Uh9Ar45xqmI",
+        "aSugSGCC12I","c8zq4kAn_O0","3sur4BmjQt8","JgDNFQ2RaLQ","oIv_Y2RPQ_A",
+        "jaRWmm73e3A","HfWLgELllZs","3PJC6uPIekc"
+    ];
+
+    let state = {
+        currentIdx: -1,
+        isPlaying: false,
+        tracks: []
+    };
+
+    function init() {
+        const listContainer = document.getElementById('trackList');
+        videoIds.forEach((id, index) => {
+            state.tracks.push({ id, index, title: "Loading...", artist: "Uploader" });
+            const item = document.createElement('div');
+            item.className = 'track-item';
+            item.id = `track-${index}`;
+            item.onclick = () => { playTrack(index); closeMenu(); };
+            item.innerHTML = `
+                <img src="https://i.ytimg.com/vi/${id}/mqdefault.jpg">
+                <div class="track-meta">
+                    <div class="title" id="side-t-${id}">Loading...</div>
+                    <div class="artist" id="side-a-${id}">...</div>
+                </div>
+            `;
+            listContainer.appendChild(item);
+
+            fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`)
+                .then(res => res.json())
+                .then(data => {
+                    state.tracks[index].title = data.title;
+                    state.tracks[index].artist = data.author_name;
+                    document.getElementById(`side-t-${id}`).innerText = data.title;
+                    document.getElementById(`side-a-${id}`).innerText = data.author_name;
+                });
+        });
+
+        document.getElementById('search').oninput = (e) => {
+            const q = e.target.value.toLowerCase();
+            state.tracks.forEach(track => {
+                const el = document.getElementById(`track-${track.index}`);
+                const match = track.title.toLowerCase().includes(q) || track.artist.toLowerCase().includes(q);
+                el.style.display = match ? "flex" : "none";
+            });
+        };
+    }
+
+    // TOGGLE SIDEBAR FOR MOBILE
+    function toggleMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const icon = document.getElementById('menuIcon');
+        sidebar.classList.toggle('open');
+        
+        if(sidebar.classList.contains('open')) {
+            icon.className = "fas fa-times";
+        } else {
+            icon.className = "fas fa-bars";
+        }
+    }
+
+    function closeMenu() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('menuIcon').className = "fas fa-bars";
+    }
+
+    function playTrack(index) {
+        state.currentIdx = index;
+        state.isPlaying = true;
+        const track = state.tracks[index];
+        document.getElementById('mainTitle').innerText = track.title;
+        document.getElementById('mainArtist').innerText = track.artist;
+        document.getElementById('playIcon').className = "fas fa-pause";
+        document.getElementById('nowPlayingBadge').innerText = "Now Playing";
+        
+        const cover = document.getElementById('mainCover');
+        cover.src = `https://i.ytimg.com/vi/${track.id}/maxresdefault.jpg`;
+        cover.onerror = () => cover.src = `https://i.ytimg.com/vi/${track.id}/hqdefault.jpg`;
+
+        document.querySelectorAll('.track-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`track-${index}`).classList.add('active');
+
+        document.getElementById('youtube-engine').innerHTML = 
+            `<iframe src="https://www.youtube.com/embed/${track.id}?autoplay=1" allow="autoplay"></iframe>`;
+        
+        animateProgress();
+    }
+
+    function togglePlay() {
+        if (state.currentIdx === -1) return playTrack(0);
+        if (state.isPlaying) {
+            state.isPlaying = false;
+            document.getElementById('playIcon').className = "fas fa-play";
+            document.getElementById('youtube-engine').innerHTML = "";
+        } else {
+            playTrack(state.currentIdx);
+        }
+    }
+
+    function navigate(dir) {
+        let next = state.currentIdx + dir;
+        if (next >= state.tracks.length) next = 0;
+        if (next < 0) next = state.tracks.length - 1;
+        playTrack(next);
+    }
+
+    function animateProgress() {
+        const bar = document.getElementById('progressBar');
+        bar.style.transition = 'none';
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 180s linear';
+            bar.style.width = '100%';
+        }, 50);
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
